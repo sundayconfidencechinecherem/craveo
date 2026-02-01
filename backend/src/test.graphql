@@ -1,0 +1,19 @@
+# Test Query
+query TestQuery {
+  hello
+  health
+}
+
+# Test Mutation
+mutation TestRegister {
+  register(input: {
+    email: "test@example.com",
+    password: "password123",
+    username: "testuser",
+    fullName: "Test User"
+  }) {
+    success
+    message
+    token
+  }
+}

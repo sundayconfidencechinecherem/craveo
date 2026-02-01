@@ -1,0 +1,76 @@
+# ==============================
+# Dependencies
+# ==============================
+node_modules/
+.pnpm-store/
+.bun/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==============================
+# Environment variables
+# ==============================
+.env
+.env.*
+!.env.example
+
+# ==============================
+# Build output
+# ==============================
+dist/
+build/
+out/
+.next/
+expo/
+web-build/
+
+# ==============================
+# Cache & tooling
+# ==============================
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
+.turbo/
+
+# ==============================
+# Testing
+# ==============================
+coverage/
+
+# ==============================
+# Runtime / logs
+# ==============================
+logs/
+*.log
+*.pid
+*.seed
+
+# ==============================
+# IDE / Editors
+# ==============================
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# ==============================
+# OS files
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Temporary files
+# ==============================
+tmp/
+temp/
+node_modules
+dist
+.env
+.env.*
+npm-debug.log*
+yarn-error.log*
