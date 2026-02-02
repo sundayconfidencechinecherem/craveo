@@ -100,7 +100,7 @@ export default function ShareModal({
         setTimeout(() => setCopied(false), 2000);
       }
     } catch (error) {
-      console.log('Native sharing cancelled or not available:', error);
+     // console.log('Native sharing cancelled or not available:', error);
     }
   };
 

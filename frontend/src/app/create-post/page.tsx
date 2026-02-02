@@ -143,7 +143,7 @@ export default function CreatePostPage() {
     e.preventDefault();
     setFormError('');
     
-    console.log('Form submission started...');
+    //console.log('Form submission started...');
     
     // Validate required fields
     if (!title.trim()) {
@@ -201,16 +201,16 @@ export default function CreatePostPage() {
         recipeDetails
       };
 
-      console.log('Submitting post data:', postData);
+      //console.log('Submitting post data:', postData);
 
       // Call GraphQL mutation
       const result = await createPost(postData);
       
-      console.log('Create post mutation result:', result);
+      //console.log('Create post mutation result:', result);
 
       // Check if mutation was successful
       if (result.data?.createPost?.success) {
-        console.log('Post created successfully:', result.data.createPost);
+       // console.log('Post created successfully:', result.data.createPost);
         setPostSuccess(true);
         
         // Show success options after a delay
@@ -219,11 +219,11 @@ export default function CreatePostPage() {
         }, 1000);
       } else {
         const errorMessage = result.data?.createPost?.message || 'Unknown error';
-        console.error('Post creation failed:', errorMessage);
+        //console.error('Post creation failed:', errorMessage);
         setFormError(`Failed to create post: ${errorMessage}`);
       }
     } catch (err: any) {
-      console.error('Error creating post:', err);
+     // console.error('Error creating post:', err);
       setFormError('Failed to create post: ' + (err.message || 'Please try again'));
     }
   };

@@ -1,4 +1,4 @@
-// src/app/components/Feed.tsx - FIXED VERSION
+// src/app/components/Feed.tsx - RESPONSIVE STYLING FOR ALL SCREENS
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -44,13 +44,29 @@ export default function Feed({ showFilters = true, feedType = 'all' }: FeedProps
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loading, isLoadingMore, hasMore]);
 
-  // Update posts when fetchedPosts changes
+  // Update posts when fetchedPosts changes - WITH NULL CHECK
   useEffect(() => {
-    if (fetchedPosts.length > 0) {
-      if (page === 0) {
-        setPosts(fetchedPosts);
-      } else {
-        setPosts(prev => [...prev, ...fetchedPosts]);
+    if (fetchedPosts && Array.isArray(fetchedPosts)) {
+      // Filter out any null or invalid posts
+      const validPosts = fetchedPosts.filter(post => 
+        post && 
+        post.id && 
+        typeof post.id === 'string' && 
+        post.id.trim() !== ''
+      );
+      
+      if (validPosts.length > 0) {
+        if (page === 0) {
+          setPosts(validPosts);
+        } else {
+          setPosts(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const newPosts = validPosts.filter(post => !existingIds.has(post.id));
+            return [...prev, ...newPosts];
+          });
+        }
+      } else if (page === 0 && fetchedPosts.length === 0) {
+        setPosts([]);
       }
     }
   }, [fetchedPosts, page]);
@@ -58,11 +74,10 @@ export default function Feed({ showFilters = true, feedType = 'all' }: FeedProps
   const loadMorePosts = async () => {
     if (isLoadingMore || !hasMore) return;
     setIsLoadingMore(true);
-    setPage(prev => prev + 1);
     try {
       await loadMore();
+      setPage(prev => prev + 1);
     } catch (error) {
-      console.error('Failed to load more posts:', error);
     } finally {
       setIsLoadingMore(false);
     }
@@ -72,13 +87,16 @@ export default function Feed({ showFilters = true, feedType = 'all' }: FeedProps
     setActiveFeed(type);
     setPosts([]);
     setPage(0);
-    console.log('Switching to feed:', type);
   };
 
   const handleRefresh = () => {
     setPosts([]);
     setPage(0);
     window.location.reload();
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Feed configuration for buttons
@@ -102,7 +120,7 @@ export default function Feed({ showFilters = true, feedType = 'all' }: FeedProps
     return (
       <div className="bg-error/10 border border-error/20 rounded-xl p-8 text-center">
         <h3 className="text-lg font-bold text-text-primary mb-2">Error Loading Feed</h3>
-        <p className="text-text-secondary mb-4">{error.message}</p>
+        <p className="text-text-secondary mb-4">{error?.message || 'Unknown error'}</p>
         <Button onClick={handleRefresh} variant="primary" icon={<FaSync />}>
           Try Again
         </Button>
@@ -110,55 +128,118 @@ export default function Feed({ showFilters = true, feedType = 'all' }: FeedProps
     );
   }
 
+  // Filter posts to ensure no null posts
+  const validPosts = posts.filter(post => 
+    post && 
+    post.id && 
+    typeof post.id === 'string' && 
+    post.id.trim() !== ''
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Feed Filters */}
+    <div className="relative">
+      {/* Feed Header with Filters - Responsive */}
       {showFilters && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {feedButtons.map(({ type, icon, label }) => (
-            <Button
-              key={type}
-              variant={activeFeed === type ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => handleFeedChange(type)}
-              icon={icon}
-            >
-              {label}
-            </Button>
-          ))}
+        <div className="sticky top-16 z-30 bg-app-bg/95 backdrop-blur-sm border-b border-surface-hover/30 mb-6 -mx-4 px-4 py-3 
+                      sm:-mx-6 sm:px-6
+                      lg:top-6 lg:mx-0 lg:px-0 lg:border lg:rounded-2xl lg:bg-surface lg:p-1 lg:mb-8">
+          <div className="flex overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+            {feedButtons.map(({ type, icon, label }) => (
+              <button
+                key={type}
+                onClick={() => handleFeedChange(type)}
+                className={`flex flex-shrink-0 items-center gap-2 px-4 py-3 rounded-xl transition-all duration-200 font-medium
+                          ${activeFeed === type 
+                            ? 'bg-primary text-white shadow-md scale-105' 
+                            : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+                          }
+                          mx-1 first:ml-0 last:mr-0
+                          min-w-[120px] justify-center
+                          lg:min-w-[140px]`}
+              >
+                <span className="text-sm lg:text-base">{icon}</span>
+                <span className="text-sm lg:text-base">{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Posts Grid */}
-      <div className="space-y-4">
-        {posts.map((post: any) => ( // Fixed: Added type annotation
-          <div key={post.id} className="animate-fade-in">
-            <PostCard
-              post={post}
-              variant="list"
-              showActions
-              showAuthor
-              showPrivacy
-              showCounts
-            />
+      {/* Main Feed Content - Responsive width for Twitter-style layout */}
+      <div className={`space-y-4
+                     ${showFilters ? 'mt-0' : 'mt-4'}
+                     px-0 sm:px-0
+                     max-w-full mx-auto
+                     lg:px-0`}>
+        {validPosts.length === 0 && !loading ? (
+          <div className="text-center py-12 lg:py-16">
+            <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10
+                          lg:w-20 lg:h-20">
+              <FaRocket className="w-8 h-8 text-primary/50 lg:w-10 lg:h-10" />
+            </div>
+            <h3 className="text-xl font-bold text-text-primary mb-2 lg:text-2xl">No posts yet</h3>
+            <p className="text-text-secondary max-w-md mx-auto text-sm lg:text-base">
+              Be the first to share your food adventures! Create a post and start inspiring others.
+            </p>
           </div>
-        ))}
+        ) : (
+          validPosts.map((post: any) => (
+            <div key={post.id} className="animate-fade-in">
+              <PostCard
+                post={post}
+                variant="list"
+                showActions
+                showAuthor
+                showPrivacy
+                showCounts
+              />
+            </div>
+          ))
+        )}
 
+        {/* Loading More Indicator */}
         {isLoadingMore && (
           <div className="py-8 text-center">
             <LoadingSpinner size="md" />
-            <p className="text-text-secondary mt-2">Loading more posts...</p>
+            <p className="text-text-secondary mt-2 text-sm lg:text-base">Loading more posts...</p>
           </div>
         )}
 
-        {!hasMore && posts.length > 0 && (
-          <div className="text-center py-8 border-t border-border">
-            <p className="text-text-secondary font-medium mb-1">You're all caught up!</p>
-
+        {/* End of Feed */}
+        {!hasMore && validPosts.length > 0 && (
+          <div className="text-center py-8 border-t border-surface-hover/30">
+            <div className="inline-flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center mb-3">
+                <FaArrowUp className="text-primary/50 text-lg" />
+              </div>
+              <p className="text-text-secondary font-medium text-sm lg:text-base">You've reached the end!</p>
+              <p className="text-text-tertiary text-xs lg:text-sm mt-1">Scroll up to see more delicious content</p>
+            </div>
           </div>
         )}
-
       </div>
+
+      {/* Scroll to Top Button - Mobile Only */}
+      {validPosts.length > 3 && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-4 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 active:scale-95 z-40
+                    sm:bottom-8 sm:right-6
+                    lg:hidden"
+          aria-label="Scroll to top"
+        >
+          <FaArrowUp className="text-lg" />
+        </button>
+      )}
+
+      {/* Refresh FAB - Desktop */}
+      <button
+        onClick={handleRefresh}
+        className="hidden lg:flex fixed right-8 bottom-8 w-14 h-14 bg-primary text-white rounded-full items-center justify-center shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 z-40 group"
+        aria-label="Refresh feed"
+      >
+        <FaSync className="text-xl group-hover:rotate-180 transition-transform duration-500" />
+      </button>
     </div>
   );
 }

@@ -59,6 +59,10 @@ const postTypeDefs = gql`
     getTrendingPosts(limit: Int): [Post]
     getFollowingPosts(limit: Int): [Post]
     getSavedPosts(limit: Int, offset: Int): [Post]
+    getLikedPosts(userId: ID!, limit: Int = 20): [Post!]!
+    getUserPosts(userId: ID!, limit: Int = 20): [Post!]!
+    getUserRecipes(userId: ID!, limit: Int = 20): [Post!]! 
+    
   }
 
   extend type Mutation {

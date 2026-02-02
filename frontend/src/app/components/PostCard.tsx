@@ -1,4 +1,3 @@
-// src/app/components/PostCard.tsx - COMPLETE CORRECTED VERSION
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -49,7 +48,7 @@ interface PostCardProps {
   showFollowButton?: boolean;
   compact?: boolean;
   showComments?: boolean;
- showCounts?: boolean;
+  showCounts?: boolean;
 }
 
 export default function PostCard({ 
@@ -68,7 +67,6 @@ export default function PostCard({
 }: PostCardProps) {
   const [localPost, setLocalPost] = useState(post);
   
-  // FIX: Use handleToggleLike and handleToggleSave (or handleLike/handleSave if you kept the aliases)
   const { handleToggleLike: likePost, handleToggleSave: savePost } = usePostInteractions();
   
   const { followUser: followMutation, loading: followLoading } = useFollowUser();
@@ -113,13 +111,13 @@ export default function PostCard({
   const getPrivacyIcon = () => {
     switch (localPost.privacy) {
       case PostPrivacy.PUBLIC:
-        return <FaGlobe className="w-3 h-3" />;
+        return <FaGlobe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
       case PostPrivacy.FRIENDS:
-        return <FaUserFriends className="w-3 h-3" />;
+        return <FaUserFriends className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
       case PostPrivacy.PRIVATE:
-        return <FaLock className="w-3 h-3" />;
+        return <FaLock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
       default:
-        return <FaGlobe className="w-3 h-3" />;
+        return <FaGlobe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
     }
   };
 
@@ -136,7 +134,7 @@ export default function PostCard({
       await followMutation(localPost.author.id);
       setIsFollowingAuthor(!isFollowingAuthor);
     } catch (error) {
-      console.error('Failed to follow user:', error);
+      //console.error('Failed to follow user:', error);
     } finally {
       setIsLoading(false);
     }
@@ -180,7 +178,7 @@ export default function PostCard({
       }
       
     } catch (error) {
-      console.error('Failed to like post:', error);
+      //console.error('Failed to like post:', error);
       setLocalPost(prev => ({
         ...prev,
         isLiked,
@@ -224,7 +222,7 @@ export default function PostCard({
       }
       
     } catch (error) {
-      console.error('Failed to save post:', error);
+      //console.error('Failed to save post:', error);
       setLocalPost(prev => ({
         ...prev,
         isSaved,
@@ -263,7 +261,6 @@ export default function PostCard({
         shareCount: newShareCount
       });
       
-      // For now, just open share modal without calling API
       setIsShareOpen(true);
       
       if (onShare) {
@@ -271,7 +268,7 @@ export default function PostCard({
       }
       
     } catch (error) {
-      console.error('Failed to share post:', error);
+      //console.error('Failed to share post:', error);
       setLocalPost(prev => ({
         ...prev,
         shareCount: localPost.shareCount || 0
@@ -322,11 +319,8 @@ export default function PostCard({
       const result = await addComment(localPost.id, content);
       
       if (result?.data?.addComment?.success) {
-        console.log('Comment added successfully');
-        // Refetch comments to get the real data
         await refetchComments();
       } else {
-        // Remove optimistic comment on error
         setComments(prev => prev.filter(c => !c.id.startsWith('temp-')));
         setLocalPost(prev => ({
           ...prev,
@@ -335,7 +329,6 @@ export default function PostCard({
       }
       
     } catch (error) {
-      console.error('Failed to add comment:', error);
       setComments(prev => prev.filter(c => !c.id.startsWith('temp-')));
       setLocalPost(prev => ({
         ...prev,
@@ -364,7 +357,7 @@ export default function PostCard({
         });
       }
     } catch (error) {
-      console.error('Failed to delete comment:', error);
+      //console.error('Failed to delete comment:', error);
     }
   };
 
@@ -382,19 +375,19 @@ export default function PostCard({
       <button
         onClick={handleFollowAuthor}
         disabled={followLoading || isLoading}
-        className={`ml-2 px-2 py-1 text-xs rounded-full transition-colors flex items-center gap-1 ${
+        className={`ml-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-colors flex items-center gap-1 whitespace-nowrap ${
           isFollowingAuthor
-            ? 'bg-surface-hover text-text-primary border border-border'
+            ? 'bg-surface-hover text-text-primary border border-border hover:bg-surface-hover/80'
             : 'bg-primary text-white hover:bg-primary-dark'
         } ${(followLoading || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {isFollowingAuthor ? (
           <>
-            <FaUserCheck className="w-3 h-3" /> Following
+            <FaUserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Following
           </>
         ) : (
           <>
-            <FaUserPlus className="w-3 h-3" /> Follow
+            <FaUserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Follow
           </>
         )}
       </button>
@@ -405,10 +398,10 @@ export default function PostCard({
     <button
       onClick={handleShareClick}
       disabled={isLoading}
-      className={`flex items-center gap-1 text-text-tertiary hover:text-green-500 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`flex items-center gap-1.5 sm:gap-2 text-text-tertiary hover:text-green-500 transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
-      <FaShare className="w-4 h-4" />
-      <span className="text-sm">{localPost.shareCount || 0}</span>
+      <FaShare className="w-4 h-4 sm:w-5 sm:h-5" />
+      <span className="text-xs sm:text-sm font-medium">{localPost.shareCount || 0}</span>
     </button>
   );
 
@@ -416,35 +409,35 @@ export default function PostCard({
     if (!commentsVisible || variant === 'grid') return null;
     
     return (
-      <div className="mt-4 border-t border-border pt-4">
+      <div className="mt-6 border-t border-border pt-6">
         {currentUser && (
-          <form onSubmit={handleAddComment} className="mb-4">
-            <div className="flex gap-3">
+          <form onSubmit={handleAddComment} className="mb-6">
+            <div className="flex gap-3 sm:gap-4">
               <img
                 src={currentUser.avatar || '/images/avatars/default.png'}
                 alt={currentUser.fullName}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
               />
               <div className="flex-1">
                 <textarea
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Write a comment..."
-                  className="w-full px-3 py-2 bg-surface-hover border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm resize-none"
-                  rows={2}
+                  className="w-full px-4 py-3 bg-surface-hover border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base resize-none"
+                  rows={3}
                   disabled={commentLoading}
                 />
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-end mt-3">
                   <button
                     type="submit"
                     disabled={!commentText.trim() || commentLoading}
-                    className={`px-3 py-1 rounded-lg flex items-center gap-1 text-sm ${
+                    className={`px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg flex items-center gap-2 text-sm sm:text-base font-medium transition-colors ${
                       commentText.trim() && !commentLoading
                         ? 'bg-primary text-white hover:bg-primary-dark'
                         : 'bg-surface-hover text-text-tertiary cursor-not-allowed'
                     }`}
                   >
-                    <FaPaperPlane className="w-3 h-3" />
+                    <FaPaperPlane className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     {commentLoading ? 'Posting...' : 'Post'}
                   </button>
                 </div>
@@ -453,47 +446,47 @@ export default function PostCard({
           </form>
         )}
         
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
           {comments.length > 0 ? (
             comments.map((comment) => (
-              <div key={comment.id} className="border-b border-border last:border-0 pb-3">
-                <div className="flex gap-3">
+              <div key={comment.id} className="border-b border-border last:border-0 pb-4">
+                <div className="flex gap-3 sm:gap-4">
                   <img
                     src={comment.author.avatar || '/images/avatars/default.png'}
                     alt={comment.author.fullName}
-                    className="w-6 h-6 rounded-full object-cover"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
                   />
                   <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium text-xs text-text-primary">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm sm:text-base text-text-primary">
                           {comment.author.fullName}
                         </span>
                         {comment.author.isVerified && (
-                          <span className="text-[10px] px-1 bg-primary text-white rounded-full">✓</span>
+                          <span className="text-xs px-2 py-0.5 bg-primary text-white rounded-full">✓</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-text-tertiary">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs sm:text-sm text-text-tertiary">
                           {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                         </span>
                         {currentUser?.id === comment.author.id && (
                           <button
                             onClick={() => handleDeleteComment(comment.id)}
-                            className="text-xs text-red-500 hover:text-red-700"
+                            className="text-xs sm:text-sm text-red-500 hover:text-red-700 transition-colors"
                           >
                             Delete
                           </button>
                         )}
                       </div>
                     </div>
-                    <p className="text-text-primary text-sm mt-1">{comment.content}</p>
+                    <p className="text-text-primary text-sm sm:text-base mt-2">{comment.content}</p>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-4 text-text-tertiary text-sm">
+            <div className="text-center py-8 text-text-tertiary text-sm sm:text-base">
               No comments yet. Be the first to comment!
             </div>
           )}
@@ -502,20 +495,20 @@ export default function PostCard({
     );
   };
 
-  // List variant
+  // List variant - Longer height with all details
   if (variant === 'list') {
     return (
       <>
         <Link href={`/post/${localPost.id}`}>
-          <div className="bg-surface rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
-            <div className="flex gap-4 p-4">
-              {/* Image */}
+          <div className="bg-surface rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer min-h-[180px] sm:min-h-[200px] mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-6">
+              {/* Image - Mobile: top, Desktop: left */}
               {localPost.images && localPost.images.length > 0 && (
-                <div className="w-24 h-24 flex-shrink-0">
+                <div className="w-full sm:w-48 sm:h-48 flex-shrink-0">
                   <img
                     src={localPost.images[0]}
                     alt={localPost.title || 'Post image'}
-                    className="w-full h-full object-cover rounded-lg"
+                    className="w-full h-48 sm:h-full object-cover rounded-xl"
                   />
                 </div>
               )}
@@ -524,35 +517,35 @@ export default function PostCard({
               <div className="flex-1 min-w-0">
                 {/* Author Info */}
                 {showAuthor && localPost.author && (
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <div className="flex items-center gap-2 mb-4 flex-wrap">
                     <Link 
                       href={`/profile/${localPost.author.id}`}
-                      className="flex items-center gap-2 hover:opacity-80"
+                      className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                     >
                       <img
                         src={localPost.author.avatar || '/images/avatars/default.png'}
                         alt={localPost.author.fullName}
-                        className="w-6 h-6 rounded-full object-cover"
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
                       />
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium text-sm text-text-primary">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-sm sm:text-base text-text-primary">
                           {localPost.author.fullName}
                         </span>
                         {localPost.author.isVerified && (
-                          <span className="text-xs px-1 py-0.5 bg-primary text-white rounded-full">✓</span>
+                          <span className="text-xs px-1.5 py-0.5 bg-primary text-white rounded-full">✓</span>
                         )}
                       </div>
                     </Link>
                     
                     {renderFollowButton()}
                     
-                    <span className="text-text-tertiary text-xs">•</span>
-                    <span className="text-text-tertiary text-xs">{formattedDate}</span>
+                    <span className="hidden sm:inline text-text-tertiary text-sm">•</span>
+                    <span className="text-text-tertiary text-xs sm:text-sm">{formattedDate}</span>
                     
                     {showPrivacy && (
                       <>
-                        <span className="text-text-tertiary text-xs">•</span>
-                        <div className="flex items-center gap-1 text-text-tertiary text-xs">
+                        <span className="hidden sm:inline text-text-tertiary text-sm">•</span>
+                        <div className="flex items-center gap-1.5 text-text-tertiary text-xs sm:text-sm">
                           {getPrivacyIcon()}
                           <span className="capitalize">{localPost.privacy?.toLowerCase()}</span>
                         </div>
@@ -561,9 +554,9 @@ export default function PostCard({
                   </div>
                 )}
                 
-                <h3 className="font-bold text-text-primary text-sm mb-1">{localPost.title}</h3>
+                <h3 className="font-bold text-lg sm:text-xl text-text-primary mb-3">{localPost.title}</h3>
                 
-                <p className="text-text-secondary text-sm mt-1">
+                <div className="text-text-secondary text-sm sm:text-base mb-4 leading-relaxed">
                   {contentPreview}
                   {postContent.length > 150 && (
                     <button
@@ -572,19 +565,19 @@ export default function PostCard({
                         e.stopPropagation();
                         setShowFullContent(!showFullContent);
                       }}
-                      className="ml-1 text-primary hover:underline font-medium"
+                      className="ml-2 text-primary hover:underline font-medium text-sm sm:text-base"
                     >
                       {showFullContent ? 'Show less' : 'Read more'}
                     </button>
                   )}
-                </p>
+                </div>
                 
                 {localPost.tags && localPost.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {localPost.tags.slice(0, 2).map((tag) => (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {localPost.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"
+                        className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs sm:text-sm hover:bg-primary/20 transition-colors"
                       >
                         #{tag}
                       </span>
@@ -592,54 +585,66 @@ export default function PostCard({
                   </div>
                 )}
                 
-                <div className="flex items-center gap-4 mt-3 text-xs text-text-tertiary">
-                  <span>{localPost.likeCount || 0} likes</span>
-                  <span className="text-sm">Comments {comments.length}</span>
-                  <span>{localPost.shareCount || 0} shares</span>
-                  <span>{localPost.saveCount || 0} saves</span>
-                </div>
+              
               </div>
-       
-
             </div>
             
             {showActions && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-                <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-t border-border bg-surface-hover/30">
+                <div className="flex items-center gap-4 sm:gap-6">
                   <button
                     onClick={handleLikeClick}
                     disabled={isLoading}
-                    className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-text-tertiary hover:text-red-500'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-sm sm:text-base font-medium ${
+                      isLiked 
+                        ? 'text-red-500 hover:bg-red-50' 
+                        : 'text-text-tertiary hover:text-red-500 hover:bg-surface-hover'
+                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {isLiked ? (
-                      <FaHeart className="w-4 h-4" />
+                      <FaHeart className="w-5 h-5 sm:w-6 sm:h-6" />
                     ) : (
-                      <FaRegHeart className="w-4 h-4" />
+                      <FaRegHeart className="w-5 h-5 sm:w-6 sm:h-6" />
                     )}
-                    <span className="text-sm">Like</span>
+                     {localPost.likeCount || 0} likes
                   </button>
                   <button
                     onClick={handleCommentClick}
-                    className="flex items-center gap-1 text-text-tertiary hover:text-blue-500"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-text-tertiary hover:text-blue-500 hover:bg-surface-hover transition-all text-sm sm:text-base font-medium"
                   >
-                    <FaComment className="w-4 h-4" />
-                    <span className="text-sm"> {comments.length || 0}</span>
-                   
+                    <FaComment className="w-5 h-5 sm:w-6 sm:h-6" />
+                    {comments.length}
                   </button>
-                  {renderShareButton()}
+                  <button
+                    onClick={handleShareClick}
+                    disabled={isLoading}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-text-tertiary hover:text-green-500 hover:bg-surface-hover transition-all text-sm sm:text-base font-medium ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <FaShare className="w-5 h-5 sm:w-6 sm:h-6" />
+                    {localPost.shareCount || 0} 
+                  </button>
                 </div>
                 <button
                   onClick={handleSaveClick}
                   disabled={isLoading}
-                  className={`${isSaved ? 'text-yellow-500' : 'text-text-tertiary hover:text-yellow-500'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`px-4 py-2 rounded-xl transition-all text-sm sm:text-base font-medium ${
+                    isSaved 
+                      ? 'text-yellow-500 hover:bg-yellow-50' 
+                      : 'text-text-tertiary hover:text-yellow-500 hover:bg-surface-hover'
+                  } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSaved ? (
-                                        <div>
-                      <FaBookmark className="w-4 h-4" />
-                    {localPost.saveCount || 0}
-                      </div>
+                    <>
+                      <FaBookmark className="w-5 h-5 sm:w-6 sm:h-6 inline mr-2" />
+                       {localPost.saveCount || 0}
+                    </>
                   ) : (
-                    <FaRegBookmark className="w-4 h-4" />
+                    <>
+                      <FaRegBookmark className="w-5 h-5 sm:w-6 sm:h-6 inline mr-2" />
+                      <span className="hidden sm:inline">Save</span>
+                    </>
                   )}
                 </button>
               </div>
@@ -660,41 +665,43 @@ export default function PostCard({
     );
   }
 
-  // Detailed variant
+  // Detailed variant - Full screen-like experience
   if (variant === 'detailed') {
     return (
       <>
-        <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-surface rounded-2xl shadow-xl overflow-hidden min-h-[600px] sm:min-h-[700px] mb-8">
           {/* Author Header */}
           {showAuthor && localPost.author && (
-            <div className="p-4 border-b border-border">
+            <div className="p-4 sm:p-6 border-b border-border">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <Link href={`/profile/${localPost.author.id}`}>
                     <img
                       src={localPost.author.avatar || '/images/avatars/default.png'}
                       alt={localPost.author.fullName}
-                      className="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover hover:opacity-90 transition-opacity"
                     />
                   </Link>
                   <div>
                     <Link 
                       href={`/profile/${localPost.author.id}`}
-                      className="flex items-center gap-1 hover:opacity-80"
+                      className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity"
                     >
-                      <span className="font-medium text-text-primary">
+                      <span className="font-bold text-lg sm:text-2xl text-text-primary">
                         {localPost.author.fullName}
                       </span>
                       {localPost.author.isVerified && (
-                        <span className="text-xs px-1 py-0.5 bg-primary text-white rounded-full">✓</span>
+                        <span className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 bg-primary text-white rounded-full">
+                          ✓ Verified
+                        </span>
                       )}
                     </Link>
-                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                    <div className="flex items-center gap-3 sm:gap-4 text-sm sm:text-base text-text-secondary mt-2">
                       <span>{formattedDate}</span>
                       {showPrivacy && (
                         <>
                           <span>•</span>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
                             {getPrivacyIcon()}
                             <span className="capitalize">{localPost.privacy?.toLowerCase()}</span>
                           </div>
@@ -704,36 +711,36 @@ export default function PostCard({
                   </div>
                   {renderFollowButton()}
                 </div>
-                <button className="text-text-tertiary hover:text-text-primary p-1">
-                  <FaEllipsisH className="w-5 h-5" />
+                <button className="text-text-tertiary hover:text-text-primary p-2 sm:p-3 hover:bg-surface-hover rounded-full transition-colors">
+                  <FaEllipsisH className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>
           )}
           
-          <div className="p-4">
-            <h1 className="text-xl font-bold text-text-primary mb-3">{localPost.title}</h1>
+          <div className="p-4 sm:p-8">
+            <h1 className="text-2xl sm:text-4xl font-bold text-text-primary mb-6">{localPost.title}</h1>
             
-            <p className="text-text-secondary mb-4 whitespace-pre-line">
+            <div className="text-text-secondary text-base sm:text-xl mb-8 sm:mb-12 whitespace-pre-line leading-relaxed sm:leading-loose">
               {localPost.content}
-            </p>
+            </div>
             
             {localPost.images && localPost.images.length > 0 && (
-              <div className="mb-4">
+              <div className="mb-8 sm:mb-12 rounded-xl sm:rounded-2xl overflow-hidden">
                 <img
                   src={localPost.images[0]}
                   alt={localPost.title || 'Post image'}
-                  className="w-full h-auto rounded-lg object-cover"
+                  className="w-full h-auto object-cover max-h-[500px] sm:max-h-[600px]"
                 />
               </div>
             )}
             
             {localPost.tags && localPost.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-3 sm:gap-4 mb-8">
                 {localPost.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                    className="px-4 sm:px-6 py-2 sm:py-3 bg-primary/10 text-primary rounded-full text-sm sm:text-base hover:bg-primary/20 transition-colors"
                   >
                     #{tag}
                   </span>
@@ -741,53 +748,83 @@ export default function PostCard({
               </div>
             )}
             
-            <div className="flex items-center gap-6 py-3 border-t border-border text-text-tertiary">
-              <span>{localPost.likeCount || 0} likes</span>
-              <span>{localPost.commentCount || 0} comments</span>
-              <span>{localPost.shareCount || 0} shares</span>
-              <span>{localPost.saveCount || 0} saves</span>
+            <div className="flex items-center gap-8 sm:gap-12 py-6 border-t border-border text-text-tertiary text-base sm:text-lg">
+              <span className="flex items-center gap-2 sm:gap-3">
+                <FaHeart className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
+                {localPost.likeCount || 0} likes
+              </span>
+              <span className="flex items-center gap-2 sm:gap-3">
+                <FaComment className="w-5 h-5 sm:w-6 sm:h-6" />
+                {localPost.commentCount || 0} comments
+              </span>
+              <span className="flex items-center gap-2 sm:gap-3">
+                <FaShare className="w-5 h-5 sm:w-6 sm:h-6" />
+                {localPost.shareCount || 0} shares
+              </span>
+              <span className="flex items-center gap-2 sm:gap-3">
+                <FaBookmark className="w-5 h-5 sm:w-6 sm:h-6" />
+                {localPost.saveCount || 0} saves
+              </span>
             </div>
           </div>
           
           {showActions && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-              <div className="flex items-center gap-6">
+            <div className="flex items-center justify-between px-4 sm:px-8 py-4 sm:py-6 border-t border-border bg-surface-hover/30">
+              <div className="flex items-center gap-4 sm:gap-8">
                 <button
                   onClick={handleLikeClick}
                   disabled={isLoading}
-                  className={`flex items-center gap-2 ${isLiked ? 'text-red-500' : 'text-text-tertiary hover:text-red-500'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`flex items-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl transition-all text-base sm:text-lg font-semibold ${
+                    isLiked 
+                      ? 'text-red-500 hover:bg-red-50' 
+                      : 'text-text-tertiary hover:text-red-500 hover:bg-surface-hover'
+                  } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isLiked ? (
-                    <FaHeart className="w-5 h-5" />
+                    <FaHeart className="w-6 h-6 sm:w-7 sm:h-7" />
                   ) : (
-                    <FaRegHeart className="w-5 h-5" />
+                    <FaRegHeart className="w-6 h-6 sm:w-7 sm:h-7" />
                   )}
-                  <span className="font-medium">Like</span>
+                  <span>Like</span>
                 </button>
-                  <button
-                    onClick={handleCommentClick}
-                    className="flex items-center gap-1 text-text-tertiary hover:text-blue-500"
-                  >
-                    <FaComment className="w-4 h-4" />
-                    <span className="text-sm"> {comments.length || 0}</span>
-                   
-                  </button>
-                {renderShareButton()}
+                <button
+                  onClick={handleCommentClick}
+                  className="flex items-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-text-tertiary hover:text-blue-500 hover:bg-surface-hover transition-all text-base sm:text-lg font-semibold"
+                >
+                  <FaComment className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <span>Comment</span>
+                </button>
+                <button
+                  onClick={handleShareClick}
+                  disabled={isLoading}
+                  className={`flex items-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-text-tertiary hover:text-green-500 hover:bg-surface-hover transition-all text-base sm:text-lg font-semibold ${
+                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <FaShare className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <span>Share</span>
+                </button>
               </div>
               <button
                 onClick={handleSaveClick}
                 disabled={isLoading}
-                className={`flex items-center gap-2 ${isSaved ? 'text-yellow-500' : 'text-text-tertiary hover:text-yellow-500'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`flex items-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl transition-all text-base sm:text-lg font-semibold ${
+                  isSaved 
+                    ? 'text-yellow-500 hover:bg-yellow-50' 
+                    : 'text-text-tertiary hover:text-yellow-500 hover:bg-surface-hover'
+                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isSaved ? (
-                                     <div>
-                      <FaBookmark className="w-5 h-5" />
-                    {localPost.saveCount || 0}
-                      </div>
+                  <>
+                    <FaBookmark className="w-6 h-6 sm:w-7 sm:h-7" />
+                    <span>Saved</span>
+                  </>
                 ) : (
-                  <FaRegBookmark className="w-5 h-5" />
+                  <>
+                    <FaRegBookmark className="w-6 h-6 sm:w-7 sm:h-7" />
+                    <span>Save</span>
+                  </>
                 )}
-                <span className="font-medium">{isSaved ? 'Saved' : 'Save'}</span>
               </button>
             </div>
           )}
@@ -806,36 +843,38 @@ export default function PostCard({
     );
   }
 
-  // Grid variant (default)
+  // Grid variant (default) - Instagram-like feed card
   return (
     <>
       <Link href={`/post/${localPost.id}`}>
-        <div className="bg-surface rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
+        <div className="bg-surface rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer min-h-[500px] sm:min-h-[550px] mb-6">
           {showAuthor && localPost.author && (
-            <div className="flex items-center gap-2 p-4 pb-2">
+            <div className="flex items-center gap-3 p-4 sm:p-6">
               <Link href={`/profile/${localPost.author.id}`}>
                 <img
                   src={localPost.author.avatar || '/images/avatars/default.png'}
                   alt={localPost.author.fullName}
-                  className="w-8 h-8 rounded-full object-cover hover:opacity-90 transition-opacity"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover hover:opacity-90 transition-opacity flex-shrink-0"
                 />
               </Link>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Link 
                     href={`/profile/${localPost.author.id}`}
-                    className="flex items-center gap-1 hover:opacity-80"
+                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                   >
-                    <span className="font-medium text-sm text-text-primary truncate">
+                    <span className="font-semibold text-sm sm:text-base text-text-primary truncate">
                       {localPost.author.fullName}
                     </span>
                     {localPost.author.isVerified && (
-                      <span className="text-xs px-1 py-0.5 bg-primary text-white rounded-full flex-shrink-0">✓</span>
+                      <span className="text-xs px-2 py-0.5 bg-primary text-white rounded-full flex-shrink-0">
+                        ✓
+                      </span>
                     )}
                   </Link>
                   {renderFollowButton()}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-text-secondary">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-text-secondary mt-1">
                   <span>{formattedDate}</span>
                   {showPrivacy && (
                     <>
@@ -848,46 +887,60 @@ export default function PostCard({
                   )}
                 </div>
               </div>
-              <button className="text-text-tertiary hover:text-text-primary p-1">
-                <FaEllipsisH className="w-4 h-4" />
+              <button className="text-text-tertiary hover:text-text-primary p-2 hover:bg-surface-hover rounded-full transition-colors">
+                <FaEllipsisH className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
           )}
           
           {localPost.images && localPost.images.length > 0 && (
-            <div className="aspect-square relative">
+            <div className="relative h-64 sm:h-80 md:h-96">
               <img
                 src={localPost.images[0]}
                 alt={localPost.title || 'Post image'}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
               {localPost.postType === PostType.RECIPE && (
-                <div className="absolute top-2 left-2 bg-primary text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                  <FaUtensils className="w-3 h-3" />
+                <div className="absolute top-4 left-4 bg-primary text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-xl">
+                  <FaUtensils className="w-4 h-4 sm:w-5 sm:h-5" />
                   Recipe
                 </div>
               )}
               {showPrivacy && (
-                <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm flex items-center gap-2">
                   {getPrivacyIcon()}
                 </div>
               )}
             </div>
           )}
           
-          <div className="p-4">
-            <h3 className="font-bold text-text-primary text-base mb-1">{localPost.title}</h3>
+          <div className="p-4 sm:p-6">
+            <h3 className="font-bold text-lg sm:text-xl text-text-primary mb-3 line-clamp-2">
+              {localPost.title}
+            </h3>
             
-            <p className="text-text-secondary text-sm mb-2 line-clamp-2">
+            <div className="text-text-secondary text-sm sm:text-base mb-4 line-clamp-3 leading-relaxed">
               {contentPreview}
-            </p>
+              {postContent.length > 150 && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowFullContent(!showFullContent);
+                  }}
+                  className="ml-2 text-primary hover:underline font-medium text-sm sm:text-base"
+                >
+                  {showFullContent ? 'Show less' : 'Read more'}
+                </button>
+              )}
+            </div>
             
             {localPost.tags && localPost.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-3">
-                {localPost.tags.slice(0, 3).map((tag) => (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {localPost.tags.slice(0, 4).map((tag) => (
                   <span
                     key={tag}
-                    className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"
+                    className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs sm:text-sm hover:bg-primary/20 transition-colors"
                   >
                     #{tag}
                   </span>
@@ -896,48 +949,81 @@ export default function PostCard({
             )}
             
             {localPost.location && (
-              <div className="flex items-center gap-1 mb-3 text-xs text-text-tertiary">
-                <FaMapMarkerAlt className="w-3 h-3" />
-                <span>{localPost.location}</span>
+              <div className="flex items-center gap-2 mb-4 text-xs sm:text-sm text-text-tertiary">
+                <FaMapMarkerAlt className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                <span className="truncate">{localPost.location}</span>
               </div>
             )}
             
+            <div className="flex items-center gap-4 mb-4 text-sm sm:text-base text-text-tertiary">
+              <span className="flex items-center gap-1.5">
+                <FaHeart className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
+                {localPost.likeCount || 0}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <FaComment className="w-4 h-4 sm:w-5 sm:h-5" />
+                {comments.length}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <FaShare className="w-4 h-4 sm:w-5 sm:h-5" />
+                {localPost.shareCount || 0}
+              </span>
+              <span className="flex items-center gap-1.5 ml-auto">
+                <FaBookmark className="w-4 h-4 sm:w-5 sm:h-5" />
+                {localPost.saveCount || 0}
+              </span>
+            </div>
+            
             {showActions && (
-              <div className="flex items-center justify-between pt-3 border-t border-border">
-                <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                <div className="flex items-center gap-6">
                   <button
                     onClick={handleLikeClick}
                     disabled={isLoading}
-                    className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-text-tertiary hover:text-red-500'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-sm sm:text-base font-medium ${
+                      isLiked 
+                        ? 'text-red-500 hover:bg-red-50' 
+                        : 'text-text-tertiary hover:text-red-500 hover:bg-surface-hover'
+                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {isLiked ? (
-                      <FaHeart className="w-4 h-4" />
+                      <FaHeart className="w-5 h-5 sm:w-6 sm:h-6" />
                     ) : (
-                      <FaRegHeart className="w-4 h-4" />
+                      <FaRegHeart className="w-5 h-5 sm:w-6 sm:h-6" />
                     )}
-                    <span className="text-sm">{localPost.likeCount || 0}</span>
+                    <span>Like</span>
                   </button>
                   <button
                     onClick={handleCommentClick}
-                    className="flex items-center gap-1 text-text-tertiary hover:text-blue-500"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-text-tertiary hover:text-blue-500 hover:bg-surface-hover transition-all text-sm sm:text-base font-medium"
                   >
-                    <FaComment className="w-4 h-4" />
-                    <span className="text-sm">{localPost.commentCount || 0}</span>
+                    <FaComment className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <span>Comment</span>
                   </button>
-                  {renderShareButton()}
+                  <button
+                    onClick={handleShareClick}
+                    disabled={isLoading}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-text-tertiary hover:text-green-500 hover:bg-surface-hover transition-all text-sm sm:text-base font-medium ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <FaShare className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <span>Share</span>
+                  </button>
                 </div>
                 <button
                   onClick={handleSaveClick}
                   disabled={isLoading}
-                  className={`${isSaved ? 'text-yellow-500' : 'text-text-tertiary hover:text-yellow-500'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`px-4 py-2 rounded-xl transition-all text-sm sm:text-base font-medium ${
+                    isSaved 
+                      ? 'text-yellow-500 hover:bg-yellow-50' 
+                      : 'text-text-tertiary hover:text-yellow-500 hover:bg-surface-hover'
+                  } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSaved ? (
-                                        <div>
-                      <FaBookmark className="w-4 h-4" />
-                    {localPost.saveCount || 0}
-                      </div>
+                    <FaBookmark className="w-5 h-5 sm:w-6 sm:h-6" />
                   ) : (
-                     <FaRegBookmark className="w-4 h-4" /> 
+                    <FaRegBookmark className="w-5 h-5 sm:w-6 sm:h-6" />
                   )}
                 </button>
               </div>

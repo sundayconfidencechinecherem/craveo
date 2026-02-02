@@ -159,56 +159,53 @@ export const UNFOLLOW_USER_MUTATION = gql`
   }
 `;
 
+
+
 export const UPDATE_PROFILE_MUTATION = gql`
   mutation UpdateProfile(
     $username: String
     $fullName: String
     $email: String
-    $avatar: String
-    $dateOfBirth: String
     $bio: String
     $website: String
     $location: String
+    $avatar: String
     $coverPhoto: String
     $isPrivate: Boolean
+    $dateOfBirth: String
   ) {
     updateProfile(
       username: $username
       fullName: $fullName
       email: $email
-      avatar: $avatar
-      dateOfBirth: $dateOfBirth
       bio: $bio
       website: $website
       location: $location
+      avatar: $avatar
       coverPhoto: $coverPhoto
       isPrivate: $isPrivate
+      dateOfBirth: $dateOfBirth
     ) {
       success
       message
       user {
         id
         username
-        email
         fullName
+        email
         avatar
-        bio
         coverPhoto
+        bio
         website
         location
-        isVerified
-        isPrivate
-        lastLogin
-        dateOfBirth
         followerCount
         followingCount
         postCount
-        createdAt
-        updatedAt
       }
     }
   }
 `;
+
 
 // ==================== POST MUTATIONS ====================
 

@@ -17,7 +17,7 @@ export default function ExplorePage() {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      console.log('Searching for:', searchQuery);
+      //console.log('Searching for:', searchQuery);
       // TODO: Implement search functionality
       // You need to create a searchPosts query in your GraphQL
     }

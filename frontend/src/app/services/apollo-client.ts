@@ -8,7 +8,6 @@ import {
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
-import { gql } from '@apollo/client';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
 const GRAPHQL_ENDPOINT = `${BACKEND_URL}/graphql`;
@@ -17,16 +16,13 @@ const GRAPHQL_ENDPOINT = `${BACKEND_URL}/graphql`;
 const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
   if (graphQLErrors) {
     graphQLErrors.forEach((error) => {
-      console.error('[GraphQL Error]:', {
-        message: error.message,
-        operation: operation.operationName,
-        path: error.path
-      });
+      // ✅ Simplified logging to avoid console spam
+      //console.error(`[GraphQL Error] in ${operation.operationName}: ${error.message}`);
     });
   }
   
   if (networkError) {
-    console.error('[Network Error]:', networkError.message);
+   //console.error('[Network Error]:', networkError.message);
   }
 });
 
@@ -44,16 +40,14 @@ const authLink = setContext((_, { headers }) => {
       const user = JSON.parse(userStr);
       token = user.token || localStorage.getItem('token');
     } catch (error) {
-      console.error('Error parsing user from localStorage:', error);
+      //console.error('Error parsing user from localStorage:', error);
     }
   }
   
   return {
     headers: {
       ...headers,
-      ...(token ? { 
-        Authorization: `Bearer ${token}` 
-      } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     }
   };
 });
@@ -73,13 +67,13 @@ const cache = new InMemoryCache({
     Query: {
       fields: {
         getSavedPosts: {
-          merge(existing = [], incoming: any[]) {
-            return incoming;
+          merge(_, incoming: any[]) {
+            return incoming; // ✅ always replace with fresh data
           },
         },
         getFeed: {
-          merge(existing = [], incoming: any[]) {
-            return incoming;
+          merge(_, incoming: any[]) {
+            return incoming; // ✅ always replace with fresh data
           },
         },
       },
@@ -139,7 +133,7 @@ export const getCurrentUser = (): any => {
       try {
         return JSON.parse(userStr);
       } catch (error) {
-        console.error('Error parsing user:', error);
+        //console.error('Error parsing user:', error);
         return null;
       }
     }

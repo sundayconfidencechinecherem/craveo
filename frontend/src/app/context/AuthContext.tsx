@@ -32,12 +32,20 @@ interface RegisterCredentials {
   location?: string;
 }
 
+interface AuthResult {
+  success: boolean;
+  message?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: User;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<{ success: boolean; message?: string }>;
-  register: (credentials: RegisterCredentials) => Promise<{ success: boolean; message?: string }>;
+  login: (credentials: LoginCredentials) => Promise<AuthResult>;
+  register: (credentials: RegisterCredentials) => Promise<AuthResult>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -86,7 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           setUser(JSON.parse(storedUser));
         } catch (error) {
-          console.error('Failed to parse stored user:', error);
+          //console.error('Failed to parse stored user:', error);
           localStorage.removeItem('user');
         }
       }
@@ -97,7 +105,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Handle user query errors
   useEffect(() => {
     if (userError) {
-      console.error('User query error:', userError);
+      //console.error('User query error:', userError);
       // If not authenticated, clear any stale data
       setUser(null);
       clearAuthData();
@@ -113,48 +121,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [userData]);
 
-  const login = async (credentials: LoginCredentials): Promise<{ success: boolean; message?: string }> => {
-    try {
-      const { data } = await loginMutation({
-        variables: {
-          identifier: credentials.identifier,
-          password: credentials.password
-        }
-      });
+const login = async (credentials: LoginCredentials): Promise<AuthResult> => {
+  try {
+    const { data } = await loginMutation({ variables: credentials });
 
-      if (data?.login?.success) {
-        // Store tokens
-        if (data.login.accessToken) {
-          localStorage.setItem('token', data.login.accessToken);
-        }
-        if (data.login.refreshToken) {
-          localStorage.setItem('refreshToken', data.login.refreshToken);
-        }
-        // Store user data
-        if (data.login.user) {
-          const userData = data.login.user;
-          localStorage.setItem('user', JSON.stringify(userData));
-          setUser(userData);
-        }
-        
-        // Refetch user data
-        await refetch();
-        
-        return { success: true };
-      } else {
-        return { 
-          success: false, 
-          message: data?.login?.message || 'Login failed' 
-        };
+    if (data?.login?.success) {
+      const { accessToken, refreshToken, user } = data.login;
+
+      if (accessToken) localStorage.setItem('token', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
       }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      return { 
-        success: false, 
-        message: error.message || 'Login failed. Please check credentials.' 
-      };
+
+      await refetch();
+
+      return { success: true, accessToken, refreshToken, user };
     }
-  };
+
+    return { success: false, message: data?.login?.message || 'Login failed' };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
 
   const register = async (credentials: RegisterCredentials): Promise<{ success: boolean; message?: string }> => {
     try {
@@ -199,7 +190,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
+      //console.error('Registration error:', error);
       return { 
         success: false, 
         message: error.message || 'Registration failed. Please try again.' 
@@ -213,7 +204,7 @@ const logout = async (): Promise<void> => {
     // Call logout mutation
     await logoutMutation();
   } catch (error) {
-    console.error('Logout mutation error:', error);
+    //console.error('Logout mutation error:', error);
   } finally {
     // Always perform local logout
     handleLogout();
@@ -245,7 +236,7 @@ const handleLogout = () => {
     try {
       await refetch();
     } catch (error) {
-      console.error('Failed to refresh user:', error);
+      //console.error('Failed to refresh user:', error);
     }
   };
 

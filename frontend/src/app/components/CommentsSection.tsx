@@ -30,7 +30,7 @@ export default function CommentsSection({
       await onAddComment(newComment);
       setNewComment('');
     } catch (error) {
-      console.error('Failed to add comment:', error);
+      //console.error('Failed to add comment:', error);
     }
   };
 

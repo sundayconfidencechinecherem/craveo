@@ -77,7 +77,7 @@ export default function SinglePostPage() {
       // Refetch to get updated data
       await refetchPost();
     } catch (error) {
-      console.error('Failed to like/unlike post:', error);
+     // console.error('Failed to like/unlike post:', error);
       // Revert on error
       setIsLiked(isLiked);
     }
@@ -105,7 +105,7 @@ export default function SinglePostPage() {
       // Refetch to get updated data
       await refetchPost();
     } catch (error) {
-      console.error('Failed to save post:', error);
+      //console.error('Failed to save post:', error);
       // Revert on error
       setIsSaved(isSaved);
     }
@@ -132,7 +132,7 @@ export default function SinglePostPage() {
     setCommentsLoading(true);
     try {
       const result = await addComment(postId, commentText.trim());
-      console.log('Comment result:', result);
+      //console.log('Comment result:', result);
       
       if (result?.data?.addComment?.success) {
         setCommentText('');
@@ -143,9 +143,9 @@ export default function SinglePostPage() {
         alert(errorMsg);
       }
     } catch (error: any) {
-      console.error('Failed to post comment:', error);
-      console.error('GraphQL Errors:', error.graphQLErrors);
-      console.error('Network Error:', error.networkError);
+      //console.error('Failed to post comment:', error);
+     // console.error('GraphQL Errors:', error.graphQLErrors);
+     // console.error('Network Error:', error.networkError);
       alert('An error occurred while posting comment');
     } finally {
       setCommentsLoading(false);

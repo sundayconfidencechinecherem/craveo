@@ -160,6 +160,29 @@ const postResolvers = {
       };
     },
 
+      getUserPosts: async (_: any, { userId, limit = 20 }: { userId: string; limit: number }) => {
+      const posts = await PostModel.find({ author: userId })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .populate('author', 'id username fullName avatar isVerified')
+        .lean();
+
+      return posts.map((post: any) => ({
+        ...post,
+        id: post._id.toString(),
+        postType: post.postType || 'NORMAL', 
+        recipeDetails: post.recipeDetails || null, 
+        likeCount: post.likes?.length || 0,
+        commentCount: post.comments?.length || 0,
+        saveCount: post.saves?.length || 0,
+        shareCount: post.shares?.length || 0,
+      }));
+    },
+
+      
+
+
+
     getFeed: async (_: any, { limit = 20, offset = 0 }: { limit: number; offset: number }, { user }: Context) => {
       const posts = await PostModel.find()
         .sort({ createdAt: -1 })
@@ -190,6 +213,19 @@ getSavedPosts: async (_: any, { limit = 20, offset = 0 }: { limit: number; offse
   return posts.map((post: any) => ({
     ...post,
     id: (post._id as Types.ObjectId).toString(),
+  }));
+},
+
+getLikedPosts: async (_: any, { userId, limit = 20 }: { userId: string; limit: number }) => {
+  const posts = await PostModel.find({ likes: userId })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .populate('author', 'id username fullName avatar isVerified')
+    .lean();
+
+  return posts.map((post: any) => ({
+    ...post,
+    id: post._id.toString(),
   }));
 },
 
@@ -230,6 +266,45 @@ getSavedPosts: async (_: any, { limit = 20, offset = 0 }: { limit: number; offse
       }));
     },
   },
+
+
+getUserRecipes: async (
+  _: any,
+  { userId, limit = 20 }: { userId: string; limit?: number }
+) => {
+  try {
+    if (!userId) {
+      console.error('getUserRecipes: userId is required');
+      return []; // RETURN EMPTY ARRAY, NOT NULL
+    }
+
+    const posts = await PostModel.find({ 
+      author: userId, 
+      postType: PostType.RECIPE 
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('author', 'id username fullName avatar isVerified')
+      .lean();
+
+    console.log('getUserRecipes found:', posts.length, 'posts');
+
+    // ALWAYS return an array, even if empty
+    const result = posts.map((post: any) => ({
+      ...post,
+      id: post._id.toString(),
+    }));
+    
+    console.log('getUserRecipes returning:', result.length, 'items');
+    return result;
+
+  } catch (error) {
+    console.error('getUserRecipes error:', error);
+    return []; // RETURN EMPTY ARRAY ON ERROR TOO
+  }
+},
+
+
 
   // ==================== MUTATIONS ====================
   Mutation: {

@@ -320,14 +320,22 @@ savedPosts: async (parent: IUser | any) => {
     updateProfile: async (_: any, args: any, { user }: Context) => {
       if (!user) throw new AuthenticationError('You must be logged in');
 
-      // Fields that can be updated
-      const updateData: any = {};
+      // Fields allowed to be updated
       const allowedFields = [
-        'username', 'fullName', 'email', 'bio', 'website', 
-        'location', 'avatar', 'coverPhoto', 'isPrivate', 'dateOfBirth'
+        'username',
+        'fullName',
+        'email',
+        'bio',
+        'website',
+        'location',
+        'avatar',
+        'coverPhoto',
+        'isPrivate',
+        'dateOfBirth',
       ];
-      
-      allowedFields.forEach(field => {
+
+      const updateData: any = {};
+      allowedFields.forEach((field) => {
         if (args[field] !== undefined) {
           updateData[field] = args[field];
         }
@@ -338,18 +346,19 @@ savedPosts: async (parent: IUser | any) => {
         updateData.dateOfBirth = new Date(args.dateOfBirth);
       }
 
-      // If username is being updated, check if it's available
+      // Validate username uniqueness
       if (args.username && args.username !== user.username) {
         const existingUser = await UserModel.findOne({ username: args.username });
         if (existingUser) throw new UserInputError('Username already taken');
       }
 
-      // If email is being updated, check if it's available
+      // Validate email uniqueness
       if (args.email && args.email !== user.email) {
         const existingUser = await UserModel.findOne({ email: args.email });
         if (existingUser) throw new UserInputError('Email already in use');
       }
 
+      // Update user
       const updatedUser = await UserModel.findByIdAndUpdate(
         user._id,
         { $set: updateData },
@@ -360,6 +369,9 @@ savedPosts: async (parent: IUser | any) => {
 
       if (!updatedUser) throw new UserInputError('User not found');
 
+      // Compute postCount dynamically
+      const postCount = await PostModel.countDocuments({ author: updatedUser._id });
+
       return {
         success: true,
         message: 'Profile updated successfully',
@@ -368,7 +380,7 @@ savedPosts: async (parent: IUser | any) => {
           username: updatedUser.username,
           email: updatedUser.email,
           fullName: updatedUser.fullName,
-          dateOfBirth: updatedUser.dateOfBirth?.toISOString(),
+          dateOfBirth: updatedUser.dateOfBirth ? updatedUser.dateOfBirth.toISOString() : null,
           avatar: updatedUser.avatar,
           bio: updatedUser.bio,
           coverPhoto: updatedUser.coverPhoto,
@@ -376,11 +388,14 @@ savedPosts: async (parent: IUser | any) => {
           location: updatedUser.location,
           isVerified: updatedUser.isVerified,
           isPrivate: updatedUser.isPrivate,
-          lastLogin: updatedUser.lastLogin?.toISOString(),
+          lastLogin: updatedUser.lastLogin ? updatedUser.lastLogin.toISOString() : null,
           createdAt: updatedUser.createdAt.toISOString(),
-          updatedAt: updatedUser.updatedAt?.toISOString(),
+          updatedAt: updatedUser.updatedAt ? updatedUser.updatedAt.toISOString() : null,
           followers: updatedUser.followers,
           following: updatedUser.following,
+          followerCount: updatedUser.followers?.length || 0,
+          followingCount: updatedUser.following?.length || 0,
+          postCount, 
         },
       };
     },

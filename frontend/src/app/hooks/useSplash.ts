@@ -18,7 +18,7 @@ export function useSplash(isAuthenticated: boolean, isLoading: boolean) {
           localStorage.setItem('craveo_splash_time', now.toString());
         }
       } catch (err) {
-        console.warn('Splash storage error:', err);
+        //console.warn('Splash storage error:', err);
       }
 
       setSplashReady(true);

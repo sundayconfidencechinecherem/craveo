@@ -1,4 +1,3 @@
-// src/app/profile/[id]/page.tsx - FIX THE SAVED POSTS SECTION
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,7 +7,7 @@ import {
   useUserPosts,
   useFollowUser,
   useCurrentUser,
-  useSavedPosts // ADD THIS IMPORT
+  useSavedPosts
 } from '@/app/hooks/useGraphQL';
 import { Post, PostType } from '@/app/graphql/types';
 import ProfileHeader from '@/app/components/ProfileHeader';
@@ -24,27 +23,27 @@ export default function ProfilePage() {
   const router = useRouter();
   const userId = params.id as string;
   
-  // Get current logged in user
+  // Current logged-in user
   const { user: currentUser, loading: currentUserLoading } = useCurrentUser();
   
-  // Get profile user data
+  // Profile user data
   const { 
     user: profileUser, 
     loading: profileLoading, 
     error: profileError 
   } = useGetUser(userId);
   
-  // Get user's posts
+  // User's posts
   const { 
     posts: userPosts, 
     loading: postsLoading 
   } = useUserPosts(userId);
   
-  // Get saved posts for current user (only if viewing own profile)
+  // Saved posts (current user only)
   const { 
-    posts: savedPosts,  // FIXED: Change from savedPosts to posts
+    posts: savedPosts,
     loading: savedPostsLoading,
-    refetch: refetchSavedPosts 
+    refetch: refetchSavedPosts
   } = useSavedPosts(20, 0);
   
   // Follow/unfollow mutation
@@ -54,59 +53,82 @@ export default function ProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   
-  // Determine if viewing own profile
+  // Determine own profile & following status
   useEffect(() => {
     if (currentUser && profileUser) {
-      const ownProfile = currentUser.id === profileUser.id;
-      setIsOwnProfile(ownProfile);
-      
-      // Check if current user is following this profile
+      setIsOwnProfile(currentUser.id === profileUser.id);
+
       const following = profileUser.followers?.some(
-        (follower: any) => {
-          if (typeof follower === 'object') {
-            return follower.id === currentUser.id;
-          }
-          return false;
-        }
+        (follower: any) => follower?.id === currentUser.id
       ) || false;
+
       setIsFollowing(following);
     }
   }, [currentUser, profileUser]);
 
-  // Calculate recipe posts
+  // Recipe posts
   const recipePosts = (userPosts || []).filter(
     (post: Post) => post.postType === PostType.RECIPE
   );
 
-  // Get liked posts (empty for now - implement if needed)
+  // Liked posts placeholder
   const likedPosts: Post[] = [];
 
-  // Calculate counts
+  // Tab counts
   const counts = {
     posts: userPosts?.length || 0,
     recipes: recipePosts.length,
     liked: likedPosts.length,
-    saved: isOwnProfile ? savedPosts.length : 0, // Use savedPosts (now correctly named)
+    saved: isOwnProfile ? savedPosts.length : 0,
   };
 
-  // ... rest of your profile page code remains the same ...
+  if (profileLoading || currentUserLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="text-center mt-32">
+        <p className="text-text-secondary">Error loading profile.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-app-bg pt-16 lg:pt-0">
       <div className="container mx-auto px-4 max-w-6xl py-8">
-        {/* ... Your existing profile header and tabs code ... */}
-        
-        {/* Tabs and Content */}
-        <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
+        {/* Profile header */}
+        {profileUser && (
+          <ProfileHeader 
+            user={profileUser} 
+            isOwnProfile={isOwnProfile}
+            isFollowing={isFollowing}
+            onFollowToggle={() => followUser(profileUser.id)}
+          />
+        )}
+
+        {/* Tabs and content */}
+        <div className="bg-surface rounded-xl shadow-lg overflow-hidden mt-6">
           <ProfileTabs
             activeTab={activeTab}
             onTabChange={setActiveTab}
             counts={counts}
           />
-          
+
           <div className="p-6">
-            {/* ... Your existing tabs for posts, recipes, liked ... */}
-            
+            {activeTab === 'posts' && (
+              <PostGrid posts={userPosts} type="grid" loading={postsLoading} emptyMessage="No posts yet" />
+            )}
+            {activeTab === 'recipes' && (
+              <PostGrid posts={recipePosts} type="grid" loading={postsLoading} emptyMessage="No recipe posts" />
+            )}
+            {activeTab === 'liked' && (
+              <PostGrid posts={likedPosts} type="grid" loading={false} emptyMessage="No liked posts" />
+            )}
             {activeTab === 'saved' && (
               <div className="text-center py-12">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
@@ -116,33 +138,26 @@ export default function ProfilePage() {
                   {isOwnProfile ? 'Your Saved Posts' : 'Saved Posts'}
                 </h3>
                 {isOwnProfile ? (
-                  <>
-                    {savedPostsLoading ? (
-                      <>
-                        <LoadingSpinner />
-                        <p className="text-text-secondary mt-4">Loading saved posts...</p>
-                      </>
-                    ) : savedPosts.length > 0 ? (
-                      <PostGrid
-                        posts={savedPosts}
-                        type="grid"
-                        loading={false}
-                        emptyMessage="No saved posts"
-                      />
-                    ) : (
-                      <>
-                        <p className="text-text-secondary mb-6">
-                          Posts you've saved will appear here
-                        </p>
-                        <button
-                          onClick={() => router.push('/')}
-                          className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors"
-                        >
-                          Explore Feed
-                        </button>
-                      </>
-                    )}
-                  </>
+                  savedPostsLoading ? (
+                    <>
+                      <LoadingSpinner />
+                      <p className="text-text-secondary mt-4">Loading saved posts...</p>
+                    </>
+                  ) : savedPosts.length > 0 ? (
+                    <PostGrid posts={savedPosts} type="grid" loading={false} emptyMessage="No saved posts" />
+                  ) : (
+                    <>
+                      <p className="text-text-secondary mb-6">
+                        Posts you've saved will appear here
+                      </p>
+                      <button
+                        onClick={() => router.push('/')}
+                        className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors"
+                      >
+                        Explore Feed
+                      </button>
+                    </>
+                  )
                 ) : (
                   <p className="text-text-secondary mb-6">
                     Only the user can see their saved posts

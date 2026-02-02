@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useFollowUser, useCurrentUser } from '@/app/hooks/useGraphQL';
-import { FaCamera, FaEdit, FaUserPlus, FaUserCheck, FaGlobe, FaMapMarkerAlt, FaLink } from 'react-icons/fa';
+import { FaCamera, FaEdit, FaUserPlus, FaUserCheck, FaMapMarkerAlt, FaLink } from 'react-icons/fa';
 import Link from 'next/link';
 
 interface ProfileHeaderProps {
@@ -20,27 +20,38 @@ interface ProfileHeaderProps {
     isVerified?: boolean;
     location?: string;
     website?: string;
-    isFollowing?: boolean;
-    isOwnProfile?: boolean;
   };
+  isOwnProfile: boolean;
+  isFollowing: boolean;
+  onFollowToggle?: () => void; // callback for follow/unfollow
   onEditProfile?: () => void;
 }
 
-export default function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
+export default function ProfileHeader({
+  user,
+  isOwnProfile,
+  isFollowing: initialFollowing,
+  onFollowToggle,
+  onEditProfile,
+}: ProfileHeaderProps) {
   const { user: currentUser } = useCurrentUser();
   const { followUser, loading: followLoading } = useFollowUser();
-  const [isFollowing, setIsFollowing] = useState(user.isFollowing || false);
+  const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [followerCount, setFollowerCount] = useState(user.followers || 0);
 
   const handleFollow = async () => {
     if (followLoading || !currentUser) return;
-    
+
     try {
-      await followUser(user.id); // FIXED: Pass string instead of object
+      if (onFollowToggle) {
+        await onFollowToggle();
+      } else {
+        await followUser(user.id);
+      }
       setIsFollowing(!isFollowing);
-      setFollowerCount(prev => isFollowing ? Math.max(0, prev - 1) : prev + 1);
+      setFollowerCount(prev => (isFollowing ? Math.max(0, prev - 1) : prev + 1));
     } catch (error) {
-      console.error('Failed to follow user:', error);
+      //console.error('Failed to follow user:', error);
     }
   };
 
@@ -56,8 +67,8 @@ export default function ProfileHeader({ user, onEditProfile }: ProfileHeaderProp
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-        
-        {user.isOwnProfile && (
+
+        {isOwnProfile && onEditProfile && (
           <button
             onClick={onEditProfile}
             className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-primary px-4 py-2 rounded-lg hover:bg-white transition-colors flex items-center gap-2 z-10"
@@ -80,7 +91,7 @@ export default function ProfileHeader({ user, onEditProfile }: ProfileHeaderProp
                   className="w-full h-full object-cover"
                 />
               </div>
-              {user.isOwnProfile && (
+              {isOwnProfile && (
                 <button className="absolute bottom-2 right-2 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark transition-colors shadow-lg">
                   <FaCamera className="w-4 h-4" />
                 </button>
@@ -100,7 +111,7 @@ export default function ProfileHeader({ user, onEditProfile }: ProfileHeaderProp
                 )}
               </div>
               <p className="text-text-secondary mb-2">@{user.username}</p>
-              
+
               {user.bio && (
                 <p className="text-text-primary max-w-2xl mb-4">{user.bio}</p>
               )}
@@ -134,19 +145,13 @@ export default function ProfileHeader({ user, onEditProfile }: ProfileHeaderProp
                   </div>
                   <div className="text-sm text-text-secondary">Posts</div>
                 </div>
-                <Link 
-                  href={`/profile/${user.id}/followers`}
-                  className="text-center hover:opacity-80"
-                >
+                <Link href={`/profile/${user.id}/followers`} className="text-center hover:opacity-80">
                   <div className="text-xl font-bold text-text-primary">
                     {followerCount.toLocaleString()}
                   </div>
                   <div className="text-sm text-text-secondary">Followers</div>
                 </Link>
-                <Link 
-                  href={`/profile/${user.id}/following`}
-                  className="text-center hover:opacity-80"
-                >
+                <Link href={`/profile/${user.id}/following`} className="text-center hover:opacity-80">
                   <div className="text-xl font-bold text-text-primary">
                     {user.following?.toLocaleString() || 0}
                   </div>
@@ -158,13 +163,15 @@ export default function ProfileHeader({ user, onEditProfile }: ProfileHeaderProp
 
           {/* Action Buttons */}
           <div className="flex gap-3 mt-4 md:mt-0">
-            {user.isOwnProfile ? (
-              <button
-                onClick={onEditProfile}
-                className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
-              >
-                <FaEdit /> Edit Profile
-              </button>
+            {isOwnProfile ? (
+              onEditProfile && (
+                <button
+                  onClick={onEditProfile}
+                  className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
+                >
+                  <FaEdit /> Edit Profile
+                </button>
+              )
             ) : (
               <button
                 onClick={handleFollow}

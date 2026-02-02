@@ -191,14 +191,27 @@ export const GET_USER_POSTS_QUERY = gql`
       title
       content
       images
+      postType 
       likeCount
       commentCount
+      saveCount  
+      shareCount 
+      isLiked    
+      isSaved   
       createdAt
       author {
         id
         username
         fullName
         avatar
+      }
+     recipeDetails {  # ← ADD THIS
+    ingredients
+    instructions
+     prepTime
+     cookTime
+     servings
+     difficulty
       }
     }
   }
@@ -472,6 +485,51 @@ export const GET_NOTIFICATIONS_QUERY = gql`
     }
   }
 `;
+
+
+export const GET_LIKED_POSTS_QUERY = gql`
+  query GetLikedPosts($userId: ID!, $limit: Int = 20) {
+    getLikedPosts(userId: $userId, limit: $limit) {
+      id
+      title
+      content
+      images
+      likeCount
+      isLiked
+      createdAt
+      author {
+        id
+        username
+        fullName
+        avatar
+        isVerified
+      }
+    }
+  }
+`;
+
+export const GET_USER_RECIPES_QUERY = gql`
+  query GetUserRecipes($userId: ID!, $limit: Int) {
+    getUserRecipes(userId: $userId, limit: $limit) {
+      id
+      title
+      content
+      postType
+      images
+      recipeDetails {
+        ingredients
+        instructions
+        prepTime
+        cookTime
+        servings
+        difficulty
+      }
+    }
+  }
+`;
+
+
+
 
 
 // ==================== OPTIONAL: ADVANCED QUERIES ====================

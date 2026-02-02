@@ -75,15 +75,15 @@ export default function Comments({ postId }: CommentsProps) {
       setComments(prev => [optimisticComment, ...prev]);
       setNewComment('');
       
-      console.log('🟡 Sending comment:', { postId, content: commentContent });
+     // console.log('🟡 Sending comment:', { postId, content: commentContent });
       
       // Call the mutation WITHOUT refetching
       const result = await addComment(postId, commentContent);
       
-      console.log('🟢 Mutation result:', result);
+      //console.log('🟢 Mutation result:', result);
       
       if (result?.data?.addComment?.success) {
-        console.log('✅ Comment added successfully via cache update');
+      //  console.log('✅ Comment added successfully via cache update');
         // Apollo cache update in the hook will handle replacing the temp comment
       } else {
         // Handle failure - remove optimistic comment
@@ -93,13 +93,13 @@ export default function Comments({ postId }: CommentsProps) {
                         result?.data?.addComment?.message || 
                         'Failed to post comment';
         setError(errorMsg);
-        console.error('❌ Comment failed:', result);
+        //console.error('❌ Comment failed:', result);
       }
       
     } catch (error: any) {
-      console.error('💥 Failed to post comment:', error);
-      console.error('GraphQL Errors:', error.graphQLErrors);
-      console.error('Network Error:', error.networkError);
+     // console.error('💥 Failed to post comment:', error);
+      //console.error('GraphQL Errors:', error.graphQLErrors);
+     // console.error('Network Error:', error.networkError);
       
       // Remove optimistic comment on error
       setComments(prev => prev.filter(c => !c.id.startsWith('temp-')));
@@ -117,8 +117,8 @@ export default function Comments({ postId }: CommentsProps) {
   
   // Add debug logging
   useEffect(() => {
-    console.log('📊 Comments state updated:', comments.length, 'comments');
-    console.log('📊 Existing comments from hook:', existingComments.length);
+   // console.log('📊 Comments state updated:', comments.length, 'comments');
+   // console.log('📊 Existing comments from hook:', existingComments.length);
   }, [comments, existingComments]);
   
   return (

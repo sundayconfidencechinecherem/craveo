@@ -1,61 +1,45 @@
-// app/(app)/page.tsx - SIMPLIFIED FOR GLOBAL NAVBAR
+// app/(app)/page.tsx - UPDATED
 'use client';
 
 import { useState } from 'react';
 import PromotionSidebar from '@/app/components/PromotionSidebar';
 import PromotionScrollcard from '@/app/components/PromotionScrollCard';
 import Feed from '@/app/components/Feed';
+import { StickyFeedTabs, FeedTab } from '@/app/components/FeedTabs';
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState('for-you');
+  const [activeTab, setActiveTab] = useState<FeedTab>('all');
 
   return (
-    <div>
-     
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-7xl px-0 sm:px-2 lg:px-8">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-6">
           {/* Main Content (8 columns) */}
           <main className="lg:col-span-8">
-            {/* Feed Tabs */}
-            <div className="sticky top-16 z-30 mb-6 rounded-xl border border-border bg-surface p-1 lg:top-6">
-              <div className="flex overflow-x-auto">
-                {[
-                  { id: 'for-you', label: 'For You' },
-                  { id: 'following', label: 'Following' },
-                  { id: 'trending', label: 'Trending' },
-                  { id: 'highlights', label: 'Highlights' },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex min-w-[120px] flex-1 items-center justify-center whitespace-nowrap rounded-xl px-4 py-3 font-semibold transition-colors ${
-                      activeTab === tab.id
-                        ? 'bg-primary text-white'
-                        : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
-                    }`}
-                  >
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Sticky Tabs */}
+            <StickyFeedTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              sticky={true}
+              offset="navbar"
+              showIcons={true}
+            />
 
-            {/* Feed */}
-            <Feed showFilters={false} />
+            {/* Feed Content */}
+            <div className="px-2 sm:px-4 lg:px-0 mt-4 lg:mt-6">
+              <Feed showFilters={false} feedType={activeTab} />
+            </div>
           </main>
 
-          {/* Right Sidebar (4 columns) */}
-          <aside className="lg:col-span-4">
+          {/* Right Sidebar (4 columns) - Desktop only */}
+          <aside className="hidden lg:block lg:col-span-4">
             <PromotionSidebar />
           </aside>
-              {/* Mobile Promotion Scrollcard */}
-      <div className="mb-6 lg:hidden">
-        <PromotionScrollcard />
-      </div>
-
         </div>
+
+      
       </div>
-   
+      <div className="h-24 lg:hidden"></div>
     </div>
   );
 }

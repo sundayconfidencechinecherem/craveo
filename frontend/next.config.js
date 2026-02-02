@@ -40,13 +40,19 @@ const withPWA = require('next-pwa')({
       }
     }
   ]
-})
+});
 
 const nextConfig = withPWA({
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['images.unsplash.com', 'via.placeholder.com', 'localhost'],
+    domains: [
+      'images.unsplash.com',
+      'via.placeholder.com',
+      'localhost',
+      'ui-avatars.com',       // ✅ added
+      'res.cloudinary.com'    // ✅ added for Cloudinary uploads
+    ],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -60,41 +66,26 @@ const nextConfig = withPWA({
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          }
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
         ]
       },
       {
         source: '/service-worker.js',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate'
-          }
+          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }
         ]
       }
-    ]
+    ];
   },
   async redirects() {
-    return []
+    return [];
   },
   async rewrites() {
-    return []
+    return [];
   }
-})
+});
 
-module.exports = nextConfig
+module.exports = nextConfig;

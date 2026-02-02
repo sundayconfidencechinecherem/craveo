@@ -24,6 +24,8 @@ import {
   CHECK_USERNAME_AVAILABILITY_QUERY,
   CHECK_EMAIL_AVAILABILITY_QUERY,
   GET_NOTIFICATIONS_QUERY,
+  GET_LIKED_POSTS_QUERY,
+  GET_USER_RECIPES_QUERY
 } from '@/app/graphql/queries';
 
 import {
@@ -55,7 +57,7 @@ export const useCurrentUser = () => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching current user:', error.message);
+      //console.error('Error fetching current user:', error.message);
     }
   }, [error]);
 
@@ -118,7 +120,7 @@ export const useFeedPosts = (limit = 20, offset = 0) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching feed posts:', error.message);
+      //console.error('Error fetching feed posts:', error.message);
     }
   }, [error]);
 
@@ -138,7 +140,7 @@ export const useFeedPosts = (limit = 20, offset = 0) => {
           },
         });
       } catch (err) {
-        console.error('Error loading more posts:', err);
+        //console.error('Error loading more posts:', err);
       }
     }
   };
@@ -160,7 +162,7 @@ export const useSavedPosts = (limit = 20, offset = 0) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching saved posts:', error.message);
+      //console.error('Error fetching saved posts:', error.message);
     }
   }, [error]);
 
@@ -181,7 +183,7 @@ export const useUserPosts = (userId: string, limit = 10) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching user posts:', error.message);
+      //console.error('Error fetching user posts:', error.message);
     }
   }, [error]);
 
@@ -202,7 +204,7 @@ export const useGetPost = (postId: string) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching post:', error.message);
+      //console.error('Error fetching post:', error.message);
     }
   }, [error]);
 
@@ -303,7 +305,7 @@ export const useLikePost = () => {
           },
         });
       } catch (cacheError) {
-        console.error('Cache update error:', cacheError);
+        //console.error('Cache update error:', cacheError);
       }
     },
   });
@@ -316,6 +318,8 @@ export const useLikePost = () => {
   
   return { likePost, loading, error };
 };
+
+
 
 
 export const useSavePost = () => {
@@ -439,7 +443,7 @@ export const useMarkNotificationRead = () => {
         variables: { notificationId }
       });
     } catch (err) {
-      console.error('Failed to mark notification as read:', err);
+     //console.error('Failed to mark notification as read:', err);
       throw err;
     }
   };
@@ -462,7 +466,7 @@ export const useGetUser = (id?: string, username?: string) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching user:', error.message);
+      //console.error('Error fetching user:', error.message);
     }
   }, [error]);
 
@@ -482,7 +486,7 @@ export const useSearchUsers = (query: string, limit = 20) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error searching users:', error.message);
+      //console.error('Error searching users:', error.message);
     }
   }, [error]);
 
@@ -502,7 +506,7 @@ export const useGetFollowers = (userId: string, limit = 20) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching followers:', error.message);
+      //console.error('Error fetching followers:', error.message);
     }
   }, [error]);
 
@@ -522,7 +526,7 @@ export const useGetFollowing = (userId: string, limit = 20) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching following:', error.message);
+      //console.error('Error fetching following:', error.message);
     }
   }, [error]);
 
@@ -574,7 +578,7 @@ export const useGetComments = (postId: string, limit = 20) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching comments:', error.message);
+      //console.error('Error fetching comments:', error.message);
     }
   }, [error]);
 
@@ -723,8 +727,7 @@ export const useUpdateProfile = () => {
     update: (cache, { data }) => {
       if (data?.updateProfile?.user) {
         const updatedUser = data.updateProfile.user;
-        
-        // Update current user in cache
+
         cache.modify({
           id: cache.identify({ __typename: 'User', id: updatedUser.id }),
           fields: {
@@ -736,26 +739,30 @@ export const useUpdateProfile = () => {
             location: () => updatedUser.location,
             avatar: () => updatedUser.avatar,
             coverPhoto: () => updatedUser.coverPhoto,
+            followerCount: () => updatedUser.followerCount,
+            followingCount: () => updatedUser.followingCount,
+            postCount: () => updatedUser.postCount,
           },
         });
       }
     },
   });
-  
-  const updateProfile = async (variables: { 
-    username?: string; 
-    fullName?: string; 
-    email?: string; 
-    bio?: string; 
-    website?: string; 
-    location?: string; 
-    avatar?: string; 
-    coverPhoto?: string; 
+
+  const updateProfile = async (variables: {
+    username?: string;
+    fullName?: string;
+    email?: string;
+    bio?: string;
+    website?: string;
+    location?: string;
+    avatar?: string;
+    coverPhoto?: string;
     dateOfBirth?: string;
   }) => {
-    return await mutate({ variables });
+    const { data } = await mutate({ variables });
+    return data?.updateProfile?.user;
   };
-  
+
   return { updateProfile, loading, error };
 };
 
@@ -778,7 +785,7 @@ export const useSearchPosts = () => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error in search posts:', error.message);
+      //console.error('Error in search posts:', error.message);
     }
   }, [error]);
 
@@ -791,7 +798,7 @@ export const useSearchPosts = () => {
       });
       return searchData?.searchPosts || [];
     } catch (err: any) {
-      console.error('Search error:', err.message);
+      //console.error('Search error:', err.message);
       return [];
     }
   };
@@ -812,7 +819,7 @@ export const useTrendingPosts = (limit = 20) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching trending posts:', error.message);
+      //console.error('Error fetching trending posts:', error.message);
     }
   }, [error]);
 
@@ -831,7 +838,7 @@ export const useRecentPosts = (limit = 20) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching recent posts:', error.message);
+      //console.error('Error fetching recent posts:', error.message);
     }
   }, [error]);
 
@@ -839,6 +846,23 @@ export const useRecentPosts = (limit = 20) => {
     posts: data?.getRecentPosts || [],
     loading,
     error,
+  };
+};
+
+
+
+export const useUserRecipes = (userId: string, limit = 20) => {
+  const { data, loading, error, refetch } = useQuery(GET_USER_RECIPES_QUERY, {
+    variables: { userId, limit },
+    skip: !userId,
+    fetchPolicy: 'cache-and-network',
+  });
+
+  return {
+    recipes: data?.getUserRecipes || [],
+    loading,
+    error,
+    refetch,
   };
 };
 
@@ -850,7 +874,7 @@ export const useFollowingPosts = (limit = 20) => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching following posts:', error.message);
+      //console.error('Error fetching following posts:', error.message);
     }
   }, [error]);
 
@@ -916,7 +940,7 @@ export const useHealthCheck = () => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error checking health:', error.message);
+      //console.error('Error checking health:', error.message);
     }
   }, [error]);
 
@@ -927,6 +951,23 @@ export const useHealthCheck = () => {
   };
 };
 
+
+export const useLikedPosts = (userId: string, limit = 20) => {
+  const { data, loading, error, refetch } = useQuery(GET_LIKED_POSTS_QUERY, {
+    variables: { userId, limit },
+    skip: !userId,
+    fetchPolicy: 'cache-and-network',
+  });
+
+  return {
+    posts: data?.getLikedPosts || [],
+    loading,
+    error,
+    refetch,
+  };
+};
+
+
 // ==================== AVAILABILITY CHECKS ====================
 
 export const useCheckUsernameAvailability = () => {
@@ -934,7 +975,7 @@ export const useCheckUsernameAvailability = () => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error checking username availability:', error.message);
+      //console.error('Error checking username availability:', error.message);
     }
   }, [error]);
 
@@ -957,7 +998,7 @@ export const useCheckEmailAvailability = () => {
 
   useEffect(() => {
     if (error) {
-      console.error('Error checking email availability:', error.message);
+      //console.error('Error checking email availability:', error.message);
     }
   }, [error]);
 
@@ -979,11 +1020,11 @@ export const useCheckEmailAvailability = () => {
 
 export const updatePostInCache = (postId: string, updatedData: any) => {
   if (!postId) {
-    console.error('Cannot update cache: postId is empty');
+    //console.error('Cannot update cache: postId is empty');
     return;
   }
 
-  console.log('🔄 Updating cache for post:', postId, updatedData);
+ // console.log('🔄 Updating cache for post:', postId, updatedData);
   
   try {
     // Update post in cache
@@ -999,9 +1040,9 @@ export const updatePostInCache = (postId: string, updatedData: any) => {
       },
     });
     
-    console.log('✅ Post cache updated successfully');
+   // console.log('✅ Post cache updated successfully');
   } catch (error: any) {
-    console.error('❌ Error updating post cache:', error.message);
+   // console.error('❌ Error updating post cache:', error.message);
   }
 };
 
@@ -1013,7 +1054,7 @@ export const refreshSavedPosts = async () => {
       include: [GET_SAVED_POSTS_QUERY],
     });
   } catch (error) {
-    console.error('Error refreshing saved posts:', error);
+    //console.error('Error refreshing saved posts:', error);
   }
 };
 
@@ -1023,7 +1064,7 @@ export const refreshFeedPosts = async () => {
       include: [GET_FEED_POSTS_QUERY],
     });
   } catch (error) {
-    console.error('Error refreshing feed posts:', error);
+    //console.error('Error refreshing feed posts:', error);
   }
 };
 
@@ -1033,7 +1074,7 @@ export const refreshUserData = async () => {
       include: [GET_ME_QUERY],
     });
   } catch (error) {
-    console.error('Error refreshing user data:', error);
+    //console.error('Error refreshing user data:', error);
   }
 };
 
@@ -1043,7 +1084,7 @@ export const refreshNotifications = async () => {
       include: [GET_NOTIFICATIONS_QUERY],
     });
   } catch (error) {
-    console.error('Error refreshing notifications:', error);
+   // console.error('Error refreshing notifications:', error);
   }
 };
 
@@ -1051,7 +1092,7 @@ export const clearApolloCache = async () => {
   try {
     await apolloClient.clearStore();
   } catch (error) {
-    console.error('Error clearing Apollo cache:', error);
+   // console.error('Error clearing Apollo cache:', error);
   }
 };
 

@@ -44,17 +44,11 @@ export default function ProtectedRoute({
       return;
     }
 
-    console.log('🔐 ProtectedRoute check:', {
-      requireAuth,
-      isAuthenticated,
-      pathname,
-      redirectTo,
-      isAuthPage: pathname === '/auth/login' || pathname === '/auth/register'
-    });
+  
 
     // If user is authenticated and trying to access auth pages, redirect to home
     if ((pathname === '/auth/login' || pathname === '/auth/register') && isAuthenticated) {
-      console.log('✅ User authenticated, redirecting from auth page to home');
+      //console.log('✅ User authenticated, redirecting from auth page to home');
       
       // Get redirect from query params or default to home
       const searchParams = new URLSearchParams(window.location.search);
@@ -72,7 +66,7 @@ export default function ProtectedRoute({
 
     // Check if authentication is required
     if (requireAuth && !isAuthenticated) {
-      console.log('🔐 Authentication required, redirecting to login');
+      //console.log('🔐 Authentication required, redirecting to login');
       
       // Store the attempted URL for redirect after login
       // Don't store auth pages themselves
@@ -85,7 +79,7 @@ export default function ProtectedRoute({
       sessionStorage.setItem('redirectAfterLogin', redirectPath);
       sessionStorage.setItem('redirectAfterLoginProtected', redirectPath);
       
-      console.log('📝 Saved redirect path:', redirectPath);
+      //console.log('📝 Saved redirect path:', redirectPath);
       
       // Build redirect URL with query parameter
       const redirectUrl = new URL(redirectTo, window.location.origin);
@@ -99,7 +93,7 @@ export default function ProtectedRoute({
 
     // Check if user needs to be verified
     if (requireVerified && isAuthenticated && !user?.isVerified) {
-      console.log('🔐 User needs verification');
+      //console.log('🔐 User needs verification');
       router.push('/verify-email');
       return;
     }
@@ -107,13 +101,13 @@ export default function ProtectedRoute({
     // Check if admin role is required
     if (requireAdmin && isAuthenticated) {
       // Future implementation for admin checks
-      console.log('🔐 Admin check would go here');
+      //console.log('🔐 Admin check would go here');
       // Add your admin check logic here
     }
     
     // If authenticated and on a protected page, clear any redirect storage
     if (isAuthenticated && requireAuth) {
-      console.log('✅ User authenticated, clearing redirect storage');
+      //console.log('✅ User authenticated, clearing redirect storage');
       localStorage.removeItem('redirectAfterLogin');
       sessionStorage.removeItem('redirectAfterLogin');
       sessionStorage.removeItem('redirectAfterLoginProtected');

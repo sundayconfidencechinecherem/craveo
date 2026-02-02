@@ -1,42 +1,59 @@
-// backend/src/index.ts - UPDATED VERSION
+// =====================
+// LOAD ENV FIRST (VERY IMPORTANT)
+// =====================
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({
+  path: path.resolve(__dirname, '../.env'),
+});
+
+// Debug (remove later)
+console.log('JWT_SECRET loaded:', !!process.env.JWT_SECRET);
+console.log('JWT_REFRESH_SECRET loaded:', !!process.env.JWT_REFRESH_SECRET);
+console.log('CLOUDINARY_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
+
+// =====================
+// NORMAL IMPORTS (AFTER DOTENV)
+// =====================
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import connectDB from './config/database';
 import { createApolloServer } from './config/apollo.config';
-import uploadRoutes from './routes/upload.routes'; // Import upload routes
+import uploadRoutes from './routes/upload.routes';
 
-dotenv.config();
-
+// =====================
+// START SERVER
+// =====================
 const startServer = async () => {
   try {
-    // Initialize Express
     const app = express();
 
-    // Middleware - INCREASE PAYLOAD LIMITS
-    app.use(cors({ 
-      origin: process.env.CLIENT_URL || 'http://localhost:3000', 
-      credentials: true 
+    // Middleware
+    app.use(cors({
+      origin: process.env.CLIENT_URL || 'http://localhost:3000',
+      credentials: true,
     }));
     app.use(cookieParser());
-    app.use(express.json({ limit: '50mb' })); // Increase JSON limit
-    app.use(express.urlencoded({ limit: '50mb', extended: true })); // Increase URL-encoded limit
+    app.use(express.json({ limit: '50mb' }));
+    app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-    // Upload routes (needs to be before Apollo to handle multipart/form-data)
+    // Upload route (before Apollo)
     app.use('/api/upload', uploadRoutes);
 
-    // Connect to MongoDB
+    // DB
     await connectDB();
 
-    // Apollo Server
+    // Apollo
     const { httpServer } = await createApolloServer(app);
 
     const PORT = process.env.PORT || 5001;
     httpServer.listen(PORT, () => {
-      console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
-      console.log(`📤 Upload API ready at http://localhost:${PORT}/api/upload`);
+      console.log(`🚀 GraphQL: http://localhost:${PORT}/graphql`);
+      console.log(`📤 Upload: http://localhost:${PORT}/api/upload`);
     });
+
   } catch (error) {
     console.error('❌ Server failed to start:', error);
     process.exit(1);

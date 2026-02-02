@@ -29,7 +29,7 @@ export const usePostInteractions = () => {
 
       return newIsLiked;
     } catch (error) {
-      console.error('Error toggling like:', error);
+      //console.error('Error toggling like:', error);
       // Revert optimistic update
       updatePostInCache(postId, {
         isLiked: currentIsLiked,
@@ -59,7 +59,7 @@ export const usePostInteractions = () => {
 
       return newIsSaved;
     } catch (error) {
-      console.error('Error saving/unsaving post:', error);
+      //console.error('Error saving/unsaving post:', error);
       updatePostInCache(postId, {
         isSaved: currentIsSaved,
         saveCount: currentSaveCount,
@@ -84,7 +84,7 @@ export const usePostInteractions = () => {
 
       throw new Error('Failed to share post');
     } catch (error) {
-      console.error('Error sharing post:', error);
+      //console.error('Error sharing post:', error);
       updatePostInCache(postId, {
         shareCount: currentShareCount,
       });

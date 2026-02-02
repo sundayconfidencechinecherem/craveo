@@ -1,279 +1,367 @@
-// src/app/profile/page.tsx - OPTIMIZED VERSION
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   useCurrentUser,
   useUserPosts,
-  useSavedPosts
+  useSavedPosts,
+  useLikedPosts,
 } from '@/app/hooks/useGraphQL';
 import { Post, PostType } from '@/app/graphql/types';
-import ProfileHeader from '@/app/components/ProfileHeader';
-import ProfileTabs from '@/app/components/ProfileTabs';
-import PostGrid from '@/app/components/PostGrid';
-import ProfileStats from '@/app/components/ProfileStats';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
-import { FaEdit, FaSync } from 'react-icons/fa';
+import PostGrid from '@/app/components/PostGrid';
+import ProfileTabs from '@/app/components/ProfileTabs';
+import { FaSync, FaMapMarkerAlt, FaLink, FaCamera, FaUtensils, FaClock, FaFire, FaUsers } from 'react-icons/fa';
 
 type TabType = 'posts' | 'recipes' | 'liked' | 'saved';
 
 export default function MyProfilePage() {
   const router = useRouter();
-  
-  // Get current user data
-  const { 
-    user: currentUser, 
-    loading: userLoading, 
-    error: userError,
-    refetch: refetchUser 
-  } = useCurrentUser();
-  
-  // Get user's posts - Only fetch when userId is available
-  const shouldFetchPosts = !!currentUser?.id;
-  const { 
-    posts: userPosts = [], 
-    loading: postsLoading,
-    error: postsError,
-    refetch: refetchPosts 
-  } = useUserPosts(currentUser?.id || '', 20);
-  
-  // Get saved posts - limit to 10 initially
-  const { 
-    posts: savedPosts = [], 
-    loading: savedLoading,
-    error: savedError,
-    refetch: refetchSaved 
-  } = useSavedPosts(10, 0);
-  
+  const { user: currentUser, loading: userLoading, error: userError, refetch: refetchUser } = useCurrentUser();
+
+  const { posts: userPosts = [], loading: postsLoading, refetch: refetchPosts } = useUserPosts(currentUser?.id || '', 50);
+  const { posts: savedPosts = [], loading: savedLoading, refetch: refetchSaved } = useSavedPosts(20, 0);
+  const { posts: likedPosts = [], loading: likedLoading, refetch: refetchLiked } = useLikedPosts(currentUser?.id || '', 20);
+
   const [activeTab, setActiveTab] = useState<TabType>('posts');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [stats, setStats] = useState({
-    posts: 0,
-    followers: 0,
-    following: 0,
-    saved: 0
-  });
 
-  // Memoized calculations
-  const recipePosts = useMemo(() => {
-    return (Array.isArray(userPosts) ? userPosts : []).filter(
-      (post: Post) => post?.postType === PostType.RECIPE
-    );
-  }, [userPosts]);
+
+
+  // Filter for recipe posts
+  const recipePosts = useMemo(() => 
+    userPosts.filter((p: any) => 
+      p.postType === PostType.RECIPE || p.recipeDetails
+    ), 
+    [userPosts]
+  );
 
   const counts = useMemo(() => ({
-    posts: Array.isArray(userPosts) ? userPosts.length : 0,
+    posts: userPosts.length,
     recipes: recipePosts.length,
-    liked: 0, // You'll need to implement liked posts query
-    saved: Array.isArray(savedPosts) ? savedPosts.length : 0,
-  }), [userPosts, recipePosts, savedPosts]);
-
-  // Update stats when data changes - with optimization
-  useEffect(() => {
-    if (currentUser && !isRefreshing) {
-      setStats({
-        posts: counts.posts,
-        followers: currentUser.followerCount || 0,
-        following: currentUser.followingCount || 0,
-        saved: counts.saved
-      });
-    }
-  }, [currentUser, counts.posts, counts.saved, isRefreshing]);
-
-  // Handle edit profile
-  const handleEditProfile = useCallback(() => {
-    router.push('/profile/edit');
-  }, [router]);
-
-  // Handle refresh all data - optimized
-  const handleRefresh = useCallback(async () => {
-    if (isRefreshing) return;
-    
-    setIsRefreshing(true);
-    try {
-      const promises = [];
-      
-      if (refetchUser) promises.push(refetchUser());
-      if (refetchPosts && currentUser?.id) promises.push(refetchPosts());
-      if (refetchSaved) promises.push(refetchSaved());
-      
-      if (promises.length > 0) {
-        // Use Promise.allSettled to handle partial failures
-        await Promise.allSettled(promises);
-      }
-    } catch (error) {
-      console.error('Failed to refresh:', error);
-    } finally {
-      // Add a small delay to show refreshing state
-      setTimeout(() => setIsRefreshing(false), 500);
-    }
-  }, [refetchUser, refetchPosts, refetchSaved, currentUser?.id, isRefreshing]);
-
-  // Loading state
-  if (userLoading && !isRefreshing) {
-    return (
-      <div className="min-h-screen bg-app-bg pt-16 lg:pt-0">
-        <div className="container mx-auto px-4 max-w-6xl py-8">
-          <LoadingSpinner size="lg" />
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (userError && !isRefreshing) {
-    return (
-      <div className="min-h-screen bg-app-bg pt-16 lg:pt-0">
-        <div className="container mx-auto px-4 max-w-6xl py-8">
-          <div className="bg-error/10 border border-error/20 rounded-xl p-8 text-center">
-            <h1 className="text-2xl font-bold text-text-primary mb-4">Error Loading Profile</h1>
-            <p className="text-text-secondary mb-6">{userError.message}</p>
-            <button
-              onClick={handleRefresh}
-              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Not logged in state
-  if (!currentUser && !userLoading) {
-    return null; // Will redirect in layout/ProtectedRoute
-  }
-
-  // Prepare user data for ProfileHeader - memoized
-  const userForHeader = useMemo(() => ({
-    id: currentUser?.id || '',
-    username: currentUser?.username || '',
-    fullName: currentUser?.fullName || currentUser?.username || '',
-    bio: currentUser?.bio || '',
-    avatar: currentUser?.avatar || '/images/avatars/default.png',
-    coverPhoto: currentUser?.coverPhoto || '',
+    liked: likedPosts.length,
+    saved: savedPosts.length,
     followers: currentUser?.followerCount || 0,
     following: currentUser?.followingCount || 0,
-    posts: counts.posts,
-    isVerified: currentUser?.isVerified || false,
-    location: currentUser?.location || '',
-    website: currentUser?.website || '',
-    isFollowing: false,
-    isOwnProfile: true,
-  }), [currentUser, counts.posts]);
+  }), [userPosts, recipePosts, likedPosts, savedPosts, currentUser]);
+
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.allSettled([
+        refetchUser?.(),
+        refetchPosts?.(),
+        refetchSaved?.(),
+        refetchLiked?.(),
+      ]);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  }, [refetchUser, refetchPosts, refetchSaved, refetchLiked, isRefreshing]);
+
+  if (userLoading && !isRefreshing) return <LoadingSpinner size="lg" />;
+  if (userError && !isRefreshing) return <div>Error: {userError.message}</div>;
+  if (!currentUser && !userLoading) return null;
 
   return (
-    <ProtectedRoute requireAuth={true}>
-      <div className="min-h-screen bg-app-bg pt-16 lg:pt-0 lg:ml-64">
-        <div className="container mx-auto px-4 max-w-6xl py-8">
-          {/* Profile Header */}
-          <div className="mb-8">
-            <ProfileHeader
-              user={userForHeader}
-              onEditProfile={handleEditProfile}
-            />
+    <ProtectedRoute requireAuth>
+      <div className="min-h-screen bg-app-bg pt-16 lg:pt-0">
+        <div className="container mx-auto max-w-5xl px-4 sm:px-6 py-8">
+       
+
+          {/* Cover Photo */}
+          <div className="relative h-48 sm:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-r from-primary/20 via-primary/15 to-primary/10">
+            {currentUser?.coverPhoto ? (
+              <img 
+                src={currentUser.coverPhoto} 
+                alt="Cover" 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface/90 to-surface/70">
+                <div className="text-center">
+                  <FaCamera className="w-16 h-16 text-text-tertiary/60 mx-auto mb-4" />
+                  <p className="text-text-secondary text-lg font-medium">No cover photo</p>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => router.push('/profile/edit')}
+              className="absolute bottom-6 right-6 bg-white/90 backdrop-blur-sm text-primary px-5 py-2.5 rounded-xl hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 font-medium"
+            >
+              <FaCamera className="w-4 h-4" />
+              Edit Cover
+            </button>
           </div>
 
-          {/* Profile Stats */}
-          <ProfileStats
-            userId={currentUser?.id || ''}
-            stats={stats}
-            isOwnProfile={true}
-          />
+          {/* Profile Header Section */}
+          <div className="relative px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 -mt-16 sm:-mt-12">
+              {/* Avatar */}
+              <div className="relative">
+                <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full p-1.5 bg-gradient-to-r from-primary to-primary-dark shadow-2xl">
+                  <div className="w-full h-full rounded-full overflow-hidden border-4 border-white">
+                    <img
+                      src={currentUser?.avatar || '/images/avatars/default.png'}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                      loading="eager"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push('/profile/edit')}
+                  className="absolute -bottom-2 -right-2 bg-primary text-white p-2.5 rounded-full hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                >
+                  <FaCamera className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* User Info */}
+              <div className="flex-1 mt-2 sm:mt-0">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary flex items-center gap-3">
+                      {currentUser?.fullName}
+                      {currentUser?.isVerified && (
+                        <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                          <span>✓</span>
+                          Verified
+                        </span>
+                      )}
+                    </h2>
+                    <p className="text-text-tertiary text-lg lg:text-xl">@{currentUser?.username}</p>
+                  </div>
+                  
+                  {/* Stats - Mobile Only */}
+                  <div className="flex sm:hidden items-center justify-between w-full py-4 border-t border-border/50">
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-primary">{counts.posts}</div>
+                      <div className="text-sm text-text-secondary font-medium">Posts</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-primary">{counts.followers}</div>
+                      <div className="text-sm text-text-secondary font-medium">Followers</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-primary">{counts.following}</div>
+                      <div className="text-sm text-text-secondary font-medium">Following</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bio */}
+                <p className="text-text-secondary mt-4 text-base lg:text-lg leading-relaxed">
+                  {currentUser?.bio || 'No bio yet. Tell others about your food journey!'}
+                </p>
+              </div>
+            </div>
+
+            {/* Stats - Desktop Only */}
+            <div className="hidden sm:flex items-center justify-between mt-8 pt-6 border-t border-border/50">
+              <div className="text-center px-4 py-2">
+                <div className="text-3xl font-bold text-primary mb-1">{counts.posts}</div>
+                <div className="text-sm text-text-secondary font-medium uppercase tracking-wider">Posts</div>
+              </div>
+              <div className="text-center px-4 py-2">
+                <div className="text-3xl font-bold text-primary mb-1">{counts.followers}</div>
+                <div className="text-sm text-text-secondary font-medium uppercase tracking-wider">Followers</div>
+              </div>
+              <div className="text-center px-4 py-2">
+                <div className="text-3xl font-bold text-primary mb-1">{counts.following}</div>
+                <div className="text-sm text-text-secondary font-medium uppercase tracking-wider">Following</div>
+              </div>
+              <div className="text-center px-4 py-2">
+                <div className="text-3xl font-bold text-primary mb-1">{counts.saved}</div>
+                <div className="text-sm text-text-secondary font-medium uppercase tracking-wider">Saved</div>
+              </div>
+            </div>
+          </div>
 
           {/* Refresh Button */}
-          <div className="flex justify-end mb-6">
+          <div className="flex justify-end mt-8 mb-8">
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-surface-hover text-text-primary rounded-lg hover:bg-surface-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-3 px-5 py-2.5 bg-surface border border-border text-text-primary rounded-xl hover:bg-surface-hover transition-all duration-300 disabled:opacity-50 shadow-sm hover:shadow-md"
             >
-              <FaSync className={`${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              <FaSync className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="font-medium">
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              </span>
             </button>
           </div>
 
-          {/* Tabs and Content */}
-          <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
-            <ProfileTabs
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              counts={counts}
-            />
-            
-            <div className="p-6">
-              {/* Posts Tab */}
+          {/* Tabs + Posts */}
+          <div className="bg-surface rounded-2xl shadow-xl overflow-hidden border border-border/50">
+            <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
+
+            <div className="p-4 sm:p-6">
               {activeTab === 'posts' && (
                 <PostGrid 
-                  posts={userPosts || []} 
-                  type="grid"
-                  loading={postsLoading && !isRefreshing}
-                  emptyMessage="You haven't posted anything yet"
-                  emptyAction={() => router.push('/post/create')}
-                  emptyActionText="Create First Post"
+                  posts={userPosts} 
+                  type="grid" 
+                  loading={postsLoading} 
+                  emptyMessage="No post yet"
                 />
               )}
               
-              {/* Recipes Tab */}
               {activeTab === 'recipes' && (
-                <PostGrid 
-                  posts={recipePosts} 
-                  type="list"
-                  loading={false}
-                  emptyMessage="You haven't shared any recipes yet"
-                  emptyAction={() => router.push('/post/create?type=recipe')}
-                  emptyActionText="Share a Recipe"
-                />
-              )}
-              
-              {/* Liked Tab */}
-              {activeTab === 'liked' && (
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-                    <span className="text-2xl">❤️</span>
+                postsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <LoadingSpinner size="lg" />
                   </div>
-                  <h3 className="text-lg font-medium text-text-primary mb-2">
-                    Liked Posts ({counts.liked})
-                  </h3>
-                  <p className="text-text-secondary mb-6 max-w-md mx-auto">
-                    Posts you've liked will appear here. Like more posts to see them here!
-                  </p>
-                  <button
-                    onClick={() => router.push('/')}
-                    className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors"
-                  >
-                    Explore Posts
-                  </button>
-                </div>
-              )}
-              
-              {/* Saved Tab */}
-              {activeTab === 'saved' && (
-                <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-text-primary">
-                      Saved Posts ({counts.saved})
-                    </h3>
+                ) : recipePosts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-primary/10">
+                      <FaUtensils className="w-10 h-10 text-primary/50" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-text-primary mb-3">No Recipes Yet</h3>
+                    <p className="text-text-secondary mb-6 max-w-md mx-auto">
+                      Share your favorite recipes with the community! Your culinary creations are waiting to be discovered.
+                    </p>
                     <button
-                      onClick={handleRefresh}
-                      disabled={isRefreshing || savedLoading}
-                      className="text-sm text-primary hover:text-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => router.push('/create-post?type=recipe')}
+                      className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium shadow-lg hover:shadow-xl"
                     >
-                      {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                      Create Your First Recipe
                     </button>
                   </div>
-                  <PostGrid
-                    posts={savedPosts || []}
-                    type="grid"
-                    loading={savedLoading && !isRefreshing}
-                    emptyMessage="No saved posts yet"
-                    emptyAction={() => router.push('/')}
-                    emptyActionText="Explore Posts"
-                  />
-                </div>
+                ) : (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-text-primary mb-6">
+                      My Recipes ({recipePosts.length})
+                    </h2>
+                    {recipePosts.map((recipe: any) => {
+                      //console.log('Rendering recipe:', recipe);
+                      
+                      return (
+                        <div key={recipe.id} className="border border-border rounded-xl p-6 bg-surface hover:bg-surface-hover transition-colors shadow-sm">
+                          <div className="flex flex-col md:flex-row gap-6">
+                            {/* Recipe Image */}
+                            {recipe.images && recipe.images.length > 0 ? (
+                              <div className="md:w-1/3">
+                                <img 
+                                  src={recipe.images[0]} 
+                                  alt={recipe.title}
+                                  className="w-full h-48 object-cover rounded-lg"
+                                  onError={(e) => {
+                                    //console.log('Image failed to load:', recipe.images[0]);
+                                    e.currentTarget.src = '/images/placeholder-food.jpg';
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="md:w-1/3 flex items-center justify-center bg-gray-100 rounded-lg">
+                                <FaUtensils className="w-16 h-16 text-gray-300" />
+                              </div>
+                            )}
+                            
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-text-primary mb-2">{recipe.title || 'Untitled Recipe'}</h3>
+                              <p className="text-text-secondary mb-4">{recipe.content || 'No description'}</p>
+                              
+                              {recipe.recipeDetails ? (
+                                <div className="space-y-4">
+                                  {/* Recipe Stats */}
+                                  <div className="flex flex-wrap gap-4">
+                                    {recipe.recipeDetails.prepTime !== undefined && recipe.recipeDetails.prepTime > 0 && (
+                                      <div className="flex items-center gap-2 text-sm bg-primary/5 px-3 py-1.5 rounded-lg">
+                                        <FaClock className="w-3 h-3 text-primary" />
+                                        <span className="font-medium">Prep:</span>
+                                        <span>{recipe.recipeDetails.prepTime} mins</span>
+                                      </div>
+                                    )}
+                                    {recipe.recipeDetails.cookTime !== undefined && recipe.recipeDetails.cookTime > 0 && (
+                                      <div className="flex items-center gap-2 text-sm bg-primary/5 px-3 py-1.5 rounded-lg">
+                                        <FaFire className="w-3 h-3 text-primary" />
+                                        <span className="font-medium">Cook:</span>
+                                        <span>{recipe.recipeDetails.cookTime} mins</span>
+                                      </div>
+                                    )}
+                                    {recipe.recipeDetails.servings !== undefined && recipe.recipeDetails.servings > 0 && (
+                                      <div className="flex items-center gap-2 text-sm bg-primary/5 px-3 py-1.5 rounded-lg">
+                                        <FaUsers className="w-3 h-3 text-primary" />
+                                        <span className="font-medium">Servings:</span>
+                                        <span>{recipe.recipeDetails.servings}</span>
+                                      </div>
+                                    )}
+                                    {recipe.recipeDetails.difficulty && (
+                                      <div className="flex items-center gap-2 text-sm bg-primary/5 px-3 py-1.5 rounded-lg">
+                                        <span className="font-medium">Difficulty:</span>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                          recipe.recipeDetails.difficulty.toLowerCase() === 'easy' ? 'bg-green-100 text-green-800' :
+                                          recipe.recipeDetails.difficulty.toLowerCase() === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                          'bg-red-100 text-red-800'
+                                        }`}>
+                                          {recipe.recipeDetails.difficulty}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Ingredients */}
+                                  {recipe.recipeDetails.ingredients && recipe.recipeDetails.ingredients.length > 0 && (
+                                    <div>
+                                      <h4 className="font-bold text-text-primary mb-2 flex items-center gap-2">
+                                        <FaUtensils className="w-4 h-4" />
+                                        Ingredients:
+                                      </h4>
+                                      <ul className="list-disc list-inside space-y-1 text-text-secondary">
+                                        {recipe.recipeDetails.ingredients.map((ingredient: string, index: number) => (
+                                          <li key={index} className="pl-2">{ingredient}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {/* Instructions */}
+                                  {recipe.recipeDetails.instructions && recipe.recipeDetails.instructions.length > 0 && (
+                                    <div>
+                                      <h4 className="font-bold text-text-primary mb-2">Instructions:</h4>
+                                      <ol className="list-decimal list-inside space-y-2 text-text-secondary">
+                                        {recipe.recipeDetails.instructions.map((step: string, index: number) => (
+                                          <li key={index} className="pl-2">{step}</li>
+                                        ))}
+                                      </ol>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-center py-8 text-text-tertiary">
+                                  <p>No recipe details available</p>
+                                  <p className="text-sm mt-2">This recipe post doesn't have detailed information.</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+              
+              {activeTab === 'liked' && (
+                <PostGrid 
+                  posts={likedPosts} 
+                  type="grid" 
+                  loading={likedLoading} 
+                  emptyMessage="No liked post yet"  
+                />
+              )}
+              
+              {activeTab === 'saved' && (
+                <PostGrid 
+                  posts={savedPosts} 
+                  type="grid" 
+                  loading={savedLoading} 
+                  emptyMessage="No saved post yet"
+                />
               )}
             </div>
           </div>
