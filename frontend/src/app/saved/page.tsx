@@ -140,9 +140,6 @@ export default function SavedPostsPage() {
                     type="grid"
                     loading={false}
                     emptyMessage="No saved posts"
-                    columns={{  base: 1,  sm: 2,  md: 3,  lg: 4,  xl: 5,
-                    }}
-                    containerClassName="w-full"
                   />
                 </div>
                 
